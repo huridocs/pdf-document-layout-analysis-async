@@ -1,0 +1,21 @@
+services:
+  pdf-document-layout-analysis-worker:
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:latest
+    init: true
+    restart: unless-stopped
+    ports:
+      - "5060:5060"
+    networks:
+      - pdf-document-layout-analysis-async-network
+
+  mongo-pdf-document-layout-analysis:
+    restart: unless-stopped
+    command: mongod --port 28017
+    image: "mongo:7.0.12"
+    networks:
+      - pdf-document-layout-analysis-async-network
+
+networks:
+  pdf-document-layout-analysis-async-network:
+    driver: bridge
