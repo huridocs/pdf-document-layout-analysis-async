@@ -13,7 +13,16 @@ check_format:
 	. .venv/bin/activate; command black --line-length 125 . --check
 
 test:
-	. .venv/bin/activate; command cd src; python -m unittest test/test_trainer.py
+	. .venv/bin/activate; command cd src; python -m pytest
 
 start:
-	docker compose up --build
+	docker compose --profile production up --build
+
+stop:
+	docker compose --profile testing stop
+
+start-test:
+	docker compose --profile testing up --attach api-pdf-layout --attach queue-processor-pdf-layout --attach worker-pdf-layout --build
+
+start_detached:
+	docker compose --profile testing up --build -d

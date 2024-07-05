@@ -1,21 +1,104 @@
 services:
-  pdf-document-layout-analysis-worker:
+  api-pdf-layout:
+    container_name: "api-pdf-layout"
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
+    init: true
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/data
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    networks:
+      - network-pdf-layout
+    ports:
+      - "5051:5051"
+    env_file: .env
+    depends_on:
+      - mongo-pdf-layout
+
+
+  queue-processor-pdf-layout:
+    container_name: "queue-processor-pdf-layout"
+    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    init: true
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - data:/app/data
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    networks:
+      - network-pdf-layout
+    env_file: .env
+    depends_on:
+      - mongo-pdf-layout
+
+  worker-pdf-layout:
+    container_name: "worker-pdf-layout"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
-    image: ghcr.io/huridocs/pdf-document-layout-analysis:latest
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.5
     init: true
     restart: unless-stopped
     ports:
       - "5060:5060"
     networks:
-      - pdf-document-layout-analysis-async-network
+      - network-pdf-layout
+    profiles:
+      - testing
 
-  mongo-pdf-document-layout-analysis:
+  worker-pdf-layout-gpu:
+    container_name: "worker-pdf-layout"
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.5
+    init: true
     restart: unless-stopped
-    command: mongod --port 28017
+    ports:
+      - "5060:5060"
+    networks:
+      - network-pdf-layout
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    profiles:
+      - production
+
+
+  mongo-pdf-layout:
+    container_name: "mongo-pdf-layout"
+    restart: unless-stopped
+    command: mongod --port 25017
     image: "mongo:7.0.12"
     networks:
-      - pdf-document-layout-analysis-async-network
+      - network-pdf-layout
+
+  redis-pdf-layout:
+    container_name: redis-pdf-layout
+    restart: unless-stopped
+    image: "redis:7.2.5"
+    command: redis-server
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - network-pdf-layout
+    ports:
+      - "6379:6379"
+    profiles:
+      - testing
 
 networks:
-  pdf-document-layout-analysis-async-network:
+  network-pdf-layout:
     driver: bridge
+
+volumes:
+  data:

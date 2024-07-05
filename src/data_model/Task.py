@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.data_model.Params import Params
+from data_model.Params import Params
 
 
 class Task(BaseModel):

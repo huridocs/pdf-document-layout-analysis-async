@@ -2,10 +2,10 @@ from typing import Union
 
 from pydantic import BaseModel
 
-from src.data_model.Params import Params
+from data_model.Params import Params
 
 
-class ExtractionMessage(BaseModel):
+class ResultMessage(BaseModel):
     tenant: str
     task: str
     params: Params

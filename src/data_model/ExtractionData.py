@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.data_model.SegmentBox import SegmentBox
+from data_model.SegmentBox import SegmentBox
 
 
 class ExtractionData(BaseModel):

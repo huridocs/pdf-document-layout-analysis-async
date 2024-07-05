@@ -1,7 +1,6 @@
 import json
 import logging
 from time import sleep
-import configuration
 import pymongo
 import redis
 from pydantic import ValidationError
@@ -10,30 +9,40 @@ from rsmq import RedisSMQ, cmd
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
-from data_model.ExtractionMessage import ExtractionMessage
+from PdfFile import PdfFile
+from configuration import (
+    MONGO_HOST,
+    MONGO_PORT,
+    REDIS_HOST,
+    REDIS_PORT,
+    RESULTS_QUEUE_NAME,
+    TASK_QUEUE_NAME,
+    SERVICE_HOST,
+    SERVICE_PORT,
+    DOCUMENT_LAYOUT_ANALYSIS_PORT,
+    ENVIRONMENT,
+    SENTRY_DSN,
+)
+from data_model.ResultMessage import ResultMessage
 from data_model.Task import Task
-from src.data_model.ExtractionData import ExtractionData
-
-SERVICE_NAME = "segmentation"
-TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
-RESULTS_QUEUE_NAME = SERVICE_NAME + "_results"
+from extract_segments import get_xml_name, extract_segments
 
 
 class QueueProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        client = pymongo.MongoClient(f"{configuration.MONGO_HOST}:{configuration.MONGO_PORT}")
+        client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_paragraph_db = client["pdf_paragraph"]
 
         self.results_queue = RedisSMQ(
-            host=configuration.REDIS_HOST,
-            port=configuration.REDIS_PORT,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
             qname=RESULTS_QUEUE_NAME,
         )
         self.extractions_tasks_queue = RedisSMQ(
-            host=configuration.REDIS_HOST,
-            port=configuration.REDIS_PORT,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
             qname=TASK_QUEUE_NAME,
         )
 
@@ -47,28 +56,17 @@ class QueueProcessor:
         self.logger.info(f"Processing Redis message: {message}")
 
         try:
-            # Get data from pdf-document-layout-analysis
-            extraction_data = ExtractionData(
-                tenant=task.tenant,
-                file_name=task.params.filename,
-                paragraphs=[],
-                page_height=1,
-                page_width=1
-            )
-
-            if not extraction_data:
-                raise FileNotFoundError
-
-            service_url = f"{configuration.SERVICE_HOST}:{configuration.SERVICE_PORT}"
-            results_url = f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}"
-            file_results_url = f"{service_url}/get_xml/{task.tenant}/{task.params.filename}"
-            extraction_message = ExtractionMessage(
+            xml_file_name = get_xml_name(task)
+            extraction_data = extract_segments(task, xml_file_name)
+            service_url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            get_xml_url = f"{SERVICE_HOST}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
+            extraction_message = ResultMessage(
                 tenant=extraction_data.tenant,
                 task=task.task,
                 params=task.params,
                 success=True,
-                data_url=results_url,
-                file_url=file_results_url,
+                data_url=f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}",
+                file_url=f"{get_xml_url}/get_xml/{xml_file_name}",
             )
 
             extraction_data_json = extraction_data.model_dump_json()
@@ -77,7 +75,7 @@ class QueueProcessor:
             self.results_queue.sendMessage(delay=5).message(extraction_message.model_dump_json()).execute()
 
         except FileNotFoundError:
-            extraction_message = ExtractionMessage(
+            extraction_message = ResultMessage(
                 tenant=task.tenant,
                 task=task.task,
                 params=task.params,
@@ -99,17 +97,17 @@ class QueueProcessor:
                 self.extractions_tasks_queue.getQueueAttributes().exec_command()
                 self.results_queue.getQueueAttributes().exec_command()
 
-                self.logger.info(f"Connecting to redis: {configuration.REDIS_HOST}:{configuration.REDIS_PORT}")
+                self.logger.info(f"Connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=TASK_QUEUE_NAME,
                     processor=self.process,
-                    host=configuration.REDIS_HOST,
-                    port=configuration.REDIS_PORT,
+                    host=REDIS_HOST,
+                    port=REDIS_PORT,
                 )
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                self.logger.error(f"Error connecting to redis: {configuration.REDIS_HOST}:{configuration.REDIS_PORT}")
+                self.logger.error(f"Error connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
                 sleep(20)
             except cmd.exceptions.QueueDoesNotExist:
                 self.logger.info("Creating queues")
@@ -121,9 +119,9 @@ class QueueProcessor:
 if __name__ == "__main__":
     try:
         sentry_sdk.init(
-            configuration.SENTRY_DSN,
+            SENTRY_DSN,
             traces_sample_rate=0.1,
-            environment=configuration.ENVIRONMENT,
+            environment=ENVIRONMENT,
             integrations=[RedisIntegration()],
         )
     except Exception:

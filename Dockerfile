@@ -1,6 +1,8 @@
 FROM python:3.12-slim-bullseye
 
-RUN mkdir -p /app/src /app/docker_volume
+RUN apt-get update && apt-get install -y git
+
+RUN mkdir -p /app/src /app/data
 
 RUN addgroup --system python && adduser --system --group python
 RUN chown -R python:python /app
