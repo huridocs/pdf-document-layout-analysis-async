@@ -21,9 +21,6 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Free up space
-      run: make free_up_space
-
     - name: Install venv
       run: make install_venv
 
@@ -36,7 +33,7 @@ jobs:
     - name: Check API ready
       uses: emilioschepis/wait-for-endpoint@v1.0.3
       with:
-        url: http://localhost:5060
+        url: http://localhost:5051
         method: GET
         expected-status: 200
         timeout: 120000

@@ -87,7 +87,16 @@ class QueueProcessor:
             self.logger.error(extraction_message.model_dump_json())
 
         except Exception:
-            self.logger.error("error extracting the paragraphs", exc_info=1)
+            extraction_message = ResultMessage(
+                tenant=task.tenant,
+                task=task.task,
+                params=task.params,
+                success=False,
+                error_message="Error getting segments",
+            )
+
+            self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
+            self.logger.error(extraction_message.model_dump_json())
 
         return True
 
