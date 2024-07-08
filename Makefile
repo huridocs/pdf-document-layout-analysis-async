@@ -26,3 +26,6 @@ start-test:
 
 start_detached:
 	docker compose --profile testing up --build -d
+
+upgrade:
+	. .venv/bin/activate; pip-upgrade
