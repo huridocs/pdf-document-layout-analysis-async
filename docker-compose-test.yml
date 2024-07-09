@@ -12,15 +12,17 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    network_mode: host
+    networks:
+      - network-pdf-layout
     ports:
       - "5051:5051"
-    env_file: .env
+    env_file: .env_test
     depends_on:
       - mongo-pdf-layout
 
-  queue-processor-pdf-layout-gpu:
-    container_name: "queue-processor-pdf-layout-gpu"
+
+  queue-processor-pdf-layout:
+    container_name: "queue-processor-pdf-layout"
     entrypoint: [ "python", "-m", "src.QueueProcessor" ]
     init: true
     restart: unless-stopped
@@ -32,34 +34,46 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    network_mode: host
-    env_file: .env
+    networks:
+      - network-pdf-layout
+    env_file: .env_test
     depends_on:
       - mongo-pdf-layout
 
-  worker-pdf-layout-gpu:
-    container_name: "worker-pdf-layout-gpu"
+  worker-pdf-layout:
+    container_name: "worker-pdf-layout"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
     image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.5
     init: true
     restart: unless-stopped
     ports:
       - "5060:5060"
-    network_mode: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+    networks:
+      - network-pdf-layout
 
   mongo-pdf-layout:
     container_name: "mongo-pdf-layout"
     restart: unless-stopped
     command: mongod --port 25017
     image: "mongo:7.0.12"
-    network_mode: host
+    networks:
+      - network-pdf-layout
+
+  redis-pdf-layout:
+    container_name: redis-pdf-layout
+    restart: unless-stopped
+    image: "redis:7.2.5"
+    command: redis-server
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - network-pdf-layout
+    ports:
+      - "6379:6379"
+
+networks:
+  network-pdf-layout:
+    driver: bridge
 
 volumes:
   data:

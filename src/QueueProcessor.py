@@ -96,7 +96,7 @@ class QueueProcessor:
             )
 
             self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-            self.logger.error(extraction_message.model_dump_json())
+            self.logger.error(extraction_message.model_dump_json(), exc_info=True)
 
         return True
 

@@ -18,8 +18,10 @@ MONGO_PORT = os.environ.get("MONGO_PORT", "25017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
+
 DOCUMENT_LAYOUT_ANALYSIS_PORT = os.environ.get("DOCUMENT_LAYOUT_ANALYSIS_PORT", "5060")
-DOCUMENT_LAYOUT_ANALYSIS_URL = f"http://worker-pdf-layout:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
+WORKER_PDF_LAYOUT = os.environ.get("WORKER_PDF_LAYOUT", "worker-pdf-layout")
+DOCUMENT_LAYOUT_ANALYSIS_URL = f"{WORKER_PDF_LAYOUT}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
 
 APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
