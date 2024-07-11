@@ -1,5 +1,4 @@
 import json
-import logging
 from time import sleep
 import pymongo
 import redis
@@ -21,6 +20,7 @@ from configuration import (
     DOCUMENT_LAYOUT_ANALYSIS_PORT,
     ENVIRONMENT,
     SENTRY_DSN,
+    service_logger,
 )
 from data_model.ResultMessage import ResultMessage
 from data_model.Task import Task
@@ -29,8 +29,6 @@ from extract_segments import get_xml_name, extract_segments
 
 class QueueProcessor:
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
-
         client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
         self.pdf_paragraph_db = client["pdf_paragraph"]
 
@@ -49,10 +47,10 @@ class QueueProcessor:
         try:
             task = Task(**message)
         except ValidationError:
-            self.logger.error(f"Not a valid Redis message: {message}")
+            service_logger.error(f"Not a valid Redis message: {message}")
             return True
 
-        self.logger.info(f"Processing Redis message: {message}")
+        service_logger.info(f"Processing Redis message: {message}")
 
         try:
             xml_file_name = get_xml_name(task)
@@ -70,7 +68,7 @@ class QueueProcessor:
 
             extraction_data_json = extraction_data.model_dump_json()
             self.pdf_paragraph_db.paragraphs.insert_one(json.loads(extraction_data_json))
-            self.logger.info(f"Results Redis message: {extraction_message}")
+            service_logger.info(f"Results Redis message: {extraction_message}")
             self.results_queue.sendMessage(delay=5).message(extraction_message.model_dump_json()).execute()
 
         except FileNotFoundError:
@@ -83,7 +81,7 @@ class QueueProcessor:
             )
 
             self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-            self.logger.error(extraction_message.model_dump_json())
+            service_logger.error(extraction_message.model_dump_json())
 
         except Exception:
             extraction_message = ResultMessage(
@@ -95,7 +93,7 @@ class QueueProcessor:
             )
 
             self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-            self.logger.error(extraction_message.model_dump_json(), exc_info=True)
+            service_logger.error(extraction_message.model_dump_json(), exc_info=True)
 
         return True
 
@@ -105,7 +103,7 @@ class QueueProcessor:
                 self.extractions_tasks_queue.getQueueAttributes().exec_command()
                 self.results_queue.getQueueAttributes().exec_command()
 
-                self.logger.info(f"Connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
+                service_logger.info(f"Connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
 
                 redis_smq_consumer = RedisSMQConsumer(
                     qname=TASK_QUEUE_NAME,
@@ -115,13 +113,13 @@ class QueueProcessor:
                 )
                 redis_smq_consumer.run()
             except redis.exceptions.ConnectionError:
-                self.logger.error(f"Error connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
+                service_logger.error(f"Error connecting to redis: {REDIS_HOST}:{REDIS_PORT}")
                 sleep(20)
             except cmd.exceptions.QueueDoesNotExist:
-                self.logger.info("Creating queues")
+                service_logger.info("Creating queues")
                 self.extractions_tasks_queue.createQueue().vt(120).exceptions(False).execute()
                 self.results_queue.createQueue().exceptions(False).execute()
-                self.logger.info("Queues have been created")
+                service_logger.info("Queues have been created")
 
 
 if __name__ == "__main__":
