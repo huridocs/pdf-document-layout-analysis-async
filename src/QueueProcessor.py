@@ -81,7 +81,7 @@ class QueueProcessor:
             )
 
             self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-            service_logger.error(extraction_message.model_dump_json())
+            service_logger.error(extraction_message.model_dump_json(), exc_info=True)
 
         except Exception:
             extraction_message = ResultMessage(
