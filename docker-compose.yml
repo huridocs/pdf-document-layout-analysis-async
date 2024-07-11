@@ -13,8 +13,6 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
     network_mode: host
-    ports:
-      - "5051:5051"
     env_file: .env
     depends_on:
       - mongo-pdf-layout
@@ -40,11 +38,9 @@ services:
   worker-pdf-layout-gpu:
     container_name: "worker-pdf-layout-gpu"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
-    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.5
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.6
     init: true
     restart: unless-stopped
-    ports:
-      - "5060:5060"
     network_mode: host
     deploy:
       resources:
