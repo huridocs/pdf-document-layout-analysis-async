@@ -1,4 +1,6 @@
-from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL
+from time import sleep
+
+from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger
 from data_model.SegmentBox import SegmentBox
 from PdfFile import PdfFile
 from data_model.ExtractionData import ExtractionData
@@ -10,10 +12,23 @@ def get_xml_name(task: Task) -> str:
     return f"{task.tenant}__{task.params.filename.lower().replace('.pdf', '.xml')}"
 
 
+def exists_file(tenant: str, file_name: str) -> bool:
+    for i in range(5):
+        pdf_file = PdfFile(tenant)
+        if pdf_file.get_path(file_name).exists():
+            return True
+
+        service_logger.info(f"File {pdf_file.get_path(file_name)} exists")
+        sleep(1)
+
+    return False
+
+
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
-    pdf_file = PdfFile(task.tenant)
-    if not pdf_file.get_path(task.params.filename).exists():
+    if not exists_file(task.tenant, task.params.filename):
         raise FileNotFoundError
+
+    pdf_file = PdfFile(task.tenant)
 
     with open(pdf_file.get_path(task.params.filename), "rb") as stream:
         files = {"file": stream}
@@ -34,18 +49,3 @@ def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
         page_height=0 if not segments else segments[0].page_height,
         page_width=0 if not segments else segments[0].page_width,
     )
-
-
-if __name__ == "__main__":
-    a = {
-        "left": 1,
-        "top": 1,
-        "width": 1,
-        "height": 1,
-        "page_number": 1,
-        "page_width": 1,
-        "page_height": 1,
-        "text": "",
-        "type": "Section_Header",
-    }
-    print(SegmentBox(**a))

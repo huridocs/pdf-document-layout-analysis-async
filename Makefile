@@ -19,7 +19,7 @@ start:
 	docker compose up --build
 
 stop:
-	docker compose stop ; docker compose stop -f docker-compose-test.yml
+	docker compose stop ; docker compose -f docker-compose-test.yml stop
 
 start-test:
 	docker compose  -f docker-compose-test.yml up --attach api-pdf-layout --attach queue-processor-pdf-layout --attach worker-pdf-layout --build
