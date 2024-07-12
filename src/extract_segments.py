@@ -26,7 +26,7 @@ def exists_file(tenant: str, file_name: str) -> bool:
 
 
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
-    # service_logger.info(f"Extract segments for {task.model_dump_json()}")
+    service_logger.info(f"Extract segments for {task.model_dump_json()}")
     # if not exists_file(task.tenant, task.params.filename):
     #     raise FileNotFoundError
 
