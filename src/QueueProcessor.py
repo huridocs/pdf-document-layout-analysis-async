@@ -49,8 +49,7 @@ class QueueProcessor:
         service_logger.info(f"TESTING ::::::::::::::::::::::::::::::::::::::::::::")
         service_logger.info(f"task.tenant {task.tenant}")
         service_logger.info(f"task.params.filename {task.params.filename}")
-        pdf_file = PdfFile(task.tenant)
-        if pdf_file.get_path(task.params.filename).exists():
+        if extract_segments(task):
             service_logger.info(f"File exists")
         else:
             service_logger.info(f"oh oh")
