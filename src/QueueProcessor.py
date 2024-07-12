@@ -45,67 +45,58 @@ class QueueProcessor:
         )
 
     def process(self, id, message, rc, ts):
-        task = Task(**message)
-        service_logger.info(f"TESTING ::::::::::::::::::::::::::::::::::::::::::::")
-        service_logger.info(f"task.tenant {task.tenant}")
-        service_logger.info(f"task.params.filename {task.params.filename}")
-        if extract_segments(task):
-            service_logger.info(f"File exists")
-        else:
-            service_logger.info(f"oh oh")
+        try:
+            task = Task(**message)
+        except ValidationError:
+            service_logger.error(f"Not a valid Redis message: {message}")
+            return True
+
+        service_logger.info(f"Processing Redis message: {message}")
+
+        try:
+            xml_file_name = get_xml_name(task)
+            extraction_data = extract_segments(task, xml_file_name)
+            service_url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+            get_xml_url = f"{SERVICE_HOST}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
+            extraction_message = ResultMessage(
+                tenant=extraction_data.tenant,
+                task=task.task,
+                params=task.params,
+                success=True,
+                data_url=f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}",
+                file_url=f"{get_xml_url}/get_xml/{xml_file_name}",
+            )
+
+            extraction_data_json = extraction_data.model_dump_json()
+            self.pdf_paragraph_db.paragraphs.insert_one(json.loads(extraction_data_json))
+            service_logger.info(f"Results Redis message: {extraction_message}")
+            self.results_queue.sendMessage(delay=5).message(extraction_message.model_dump_json()).execute()
+
+        except FileNotFoundError:
+            extraction_message = ResultMessage(
+                tenant=task.tenant,
+                task=task.task,
+                params=task.params,
+                success=False,
+                error_message="Error getting the xml from the pdf",
+            )
+
+            self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
+            service_logger.error(extraction_message.model_dump_json(), exc_info=True)
+
+        except Exception:
+            extraction_message = ResultMessage(
+                tenant=task.tenant,
+                task=task.task,
+                params=task.params,
+                success=False,
+                error_message="Error getting segments",
+            )
+
+            self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
+            service_logger.error(extraction_message.model_dump_json(), exc_info=True)
+
         return True
-        # try:
-        #     task = Task(**message)
-        # except ValidationError:
-        #     service_logger.error(f"Not a valid Redis message: {message}")
-        #     return True
-        #
-        # service_logger.info(f"Processing Redis message: {message}")
-        #
-        # try:
-        #     xml_file_name = get_xml_name(task)
-        #     extraction_data = extract_segments(task, xml_file_name)
-        #     service_url = f"{SERVICE_HOST}:{SERVICE_PORT}"
-        #     get_xml_url = f"{SERVICE_HOST}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
-        #     extraction_message = ResultMessage(
-        #         tenant=extraction_data.tenant,
-        #         task=task.task,
-        #         params=task.params,
-        #         success=True,
-        #         data_url=f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}",
-        #         file_url=f"{get_xml_url}/get_xml/{xml_file_name}",
-        #     )
-        #
-        #     extraction_data_json = extraction_data.model_dump_json()
-        #     self.pdf_paragraph_db.paragraphs.insert_one(json.loads(extraction_data_json))
-        #     service_logger.info(f"Results Redis message: {extraction_message}")
-        #     self.results_queue.sendMessage(delay=5).message(extraction_message.model_dump_json()).execute()
-        #
-        # except FileNotFoundError:
-        #     extraction_message = ResultMessage(
-        #         tenant=task.tenant,
-        #         task=task.task,
-        #         params=task.params,
-        #         success=False,
-        #         error_message="Error getting the xml from the pdf",
-        #     )
-        #
-        #     self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-        #     service_logger.error(extraction_message.model_dump_json(), exc_info=True)
-        #
-        # except Exception:
-        #     extraction_message = ResultMessage(
-        #         tenant=task.tenant,
-        #         task=task.task,
-        #         params=task.params,
-        #         success=False,
-        #         error_message="Error getting segments",
-        #     )
-        #
-        #     self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
-        #     service_logger.error(extraction_message.model_dump_json(), exc_info=True)
-        #
-        # return True
 
     def subscribe_to_extractions_tasks_queue(self):
         while True:

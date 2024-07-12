@@ -25,29 +25,28 @@ def exists_file(tenant: str, file_name: str) -> bool:
     return False
 
 
-def extract_segments(task: Task, xml_file_name: str = ""):
-    service_logger.info(f"Extract segments for {task.model_dump_json()}")
-    return exists_file(task.tenant, task.params.filename)
-    #     raise FileNotFoundError
+def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
+    if not exists_file(task.tenant, task.params.filename):
+        raise FileNotFoundError(f"File {task.params.filename} does not exists")
 
-    # pdf_file = PdfFile(task.tenant)
-    #
-    # with open(pdf_file.get_path(task.params.filename), "rb") as stream:
-    #     files = {"file": stream}
-    #
-    #     if xml_file_name:
-    #         results = requests.post(f"{DOCUMENT_LAYOUT_ANALYSIS_URL}/save_xml/{xml_file_name}", files=files)
-    #     else:
-    #         results = requests.post(DOCUMENT_LAYOUT_ANALYSIS_URL, files=files)
-    #
-    # if results.status_code != 200:
-    #     raise Exception("Error extracting the paragraphs")
-    #
-    # segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results.json()]
-    # return ExtractionData(
-    #     tenant=task.tenant,
-    #     file_name=task.params.filename,
-    #     paragraphs=segments,
-    #     page_height=0 if not segments else segments[0].page_height,
-    #     page_width=0 if not segments else segments[0].page_width,
-    # )
+    pdf_file = PdfFile(task.tenant)
+
+    with open(pdf_file.get_path(task.params.filename), "rb") as stream:
+        files = {"file": stream}
+
+        if xml_file_name:
+            results = requests.post(f"{DOCUMENT_LAYOUT_ANALYSIS_URL}/save_xml/{xml_file_name}", files=files)
+        else:
+            results = requests.post(DOCUMENT_LAYOUT_ANALYSIS_URL, files=files)
+
+    if results.status_code != 200:
+        raise Exception("Error extracting the paragraphs")
+
+    segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results.json()]
+    return ExtractionData(
+        tenant=task.tenant,
+        file_name=task.params.filename,
+        paragraphs=segments,
+        page_height=0 if not segments else segments[0].page_height,
+        page_width=0 if not segments else segments[0].page_width,
+    )
