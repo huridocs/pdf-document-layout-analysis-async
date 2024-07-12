@@ -10,10 +10,14 @@ from data_model.ExtractionData import ExtractionData
 from data_model.ResultMessage import ResultMessage
 from data_model.Params import Params
 from data_model.Task import Task
+from delete_queues import delete_queues
 
 
 class TestEndToEnd(TestCase):
     service_url = "http://localhost:5051"
+
+    def setUp(self):
+        delete_queues()
 
     def test_error_file(self):
         tenant = "end_to_end_test_error"

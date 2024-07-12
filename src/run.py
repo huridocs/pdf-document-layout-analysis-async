@@ -3,7 +3,7 @@ from rsmq import RedisSMQ
 from data_model.Params import Params
 from data_model.Task import Task
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     extractions_tasks_queue = RedisSMQ(
         host="",
         port="6379",
