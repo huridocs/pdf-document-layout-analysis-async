@@ -16,7 +16,6 @@ def exists_file(tenant: str, file_name: str) -> bool:
     for i in range(5):
         pdf_file = PdfFile(tenant)
         if pdf_file.get_path(file_name).exists():
-            service_logger.info(f"Exists {pdf_file.get_path(file_name)}")
             return True
 
         service_logger.error(f"File {pdf_file.get_path(file_name)} does not exists right now")
