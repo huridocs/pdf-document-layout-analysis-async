@@ -12,34 +12,16 @@ def get_xml_name(task: Task) -> str:
     return f"{task.tenant}__{task.params.filename.lower().replace('.pdf', '.xml')}"
 
 
-def exists_file(tenant: str, file_name: str) -> bool:
-    for i in range(5):
-        pdf_file = PdfFile(tenant)
-        if pdf_file.get_path(file_name).exists():
-            return True
-
-        service_logger.error(f"File {pdf_file.get_path(file_name)} does not exists right now")
-        sleep(1)
-
-    return False
-
-
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
-    if not exists_file(task.tenant, task.params.filename):
-        raise FileNotFoundError(f"File {task.params.filename} does not exists")
-
     pdf_file = PdfFile(task.tenant)
 
     with open(pdf_file.get_path(task.params.filename), "rb") as stream:
         files = {"file": stream}
-
-        if xml_file_name:
-            results = requests.post(f"{DOCUMENT_LAYOUT_ANALYSIS_URL}/save_xml/{xml_file_name}", files=files)
-        else:
-            results = requests.post(DOCUMENT_LAYOUT_ANALYSIS_URL, files=files)
+        url = DOCUMENT_LAYOUT_ANALYSIS_URL + (f"/save_xml/{xml_file_name}" if xml_file_name else "")
+        results = requests.post(url, files=files)
 
     if results.status_code != 200:
-        raise Exception("Error extracting the paragraphs")
+        service_logger.error(f"Response error: {results.status_code} - {results.text}")
 
     segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results.json()]
     return ExtractionData(
