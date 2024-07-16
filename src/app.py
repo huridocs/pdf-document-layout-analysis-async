@@ -7,14 +7,13 @@ import sys
 
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
+from starlette.concurrency import run_in_threadpool
 
 from catch_exceptions import catch_exceptions
 from configuration import MONGO_HOST, MONGO_PORT, service_logger
-from data_model.ExtractionData import ExtractionData
 from PdfFile import PdfFile
-from data_model.Params import Params
-from data_model.Task import Task
-from extract_segments import extract_segments
+from get_paragraphs import get_paragraphs
+from run import extract_segments_from_file
 
 
 @asynccontextmanager
@@ -54,12 +53,7 @@ async def error():
 @app.post("/")
 @catch_exceptions
 async def post_extract_paragraphs(file: UploadFile):
-    filename = file.filename
-    default_tenant = "default"
-    task = Task(tenant=default_tenant, task="extract_segments", params=Params(filename=filename))
-    PdfFile(default_tenant).save(pdf_file_name=filename, file=file.file.read())
-    extraction_data = extract_segments(task)
-    return extraction_data.paragraphs
+    return await run_in_threadpool(extract_segments_from_file, file)
 
 
 @app.post("/async_extraction/{tenant}")
@@ -67,17 +61,11 @@ async def post_extract_paragraphs(file: UploadFile):
 async def async_extraction(tenant, file: UploadFile = File(...)):
     filename = file.filename
     pdf_file = PdfFile(tenant)
-    pdf_file.save(pdf_file_name=filename, file=file.file.read())
+    await run_in_threadpool(pdf_file.save, filename, file.file.read())
     return "task registered"
 
 
 @app.get("/get_paragraphs/{tenant}/{pdf_file_name}")
 @catch_exceptions
-async def get_paragraphs(tenant: str, pdf_file_name: str):
-    suggestions_filter = {"tenant": tenant, "file_name": pdf_file_name}
-    pdf_paragraph_db = app.mongodb_client["pdf_paragraph"]
-    extraction_data_dict = pdf_paragraph_db.paragraphs.find_one(suggestions_filter)
-    pdf_paragraph_db.paragraphs.delete_many(suggestions_filter)
-
-    extraction_data = ExtractionData(**extraction_data_dict)
-    return extraction_data.model_dump_json()
+async def get_paragraphs_endpoint(tenant: str, pdf_file_name: str):
+    return await run_in_threadpool(get_paragraphs, app.mongodb_client, tenant, pdf_file_name)

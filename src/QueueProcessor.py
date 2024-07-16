@@ -8,7 +8,6 @@ from rsmq import RedisSMQ, cmd
 from sentry_sdk.integrations.redis import RedisIntegration
 import sentry_sdk
 
-from PdfFile import PdfFile
 from configuration import (
     MONGO_HOST,
     MONGO_PORT,
