@@ -1,7 +1,7 @@
 services:
   api-pdf-layout:
     container_name: "api-pdf-layout"
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
+    entrypoint: [ "gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
     init: true
     restart: unless-stopped
     build:
