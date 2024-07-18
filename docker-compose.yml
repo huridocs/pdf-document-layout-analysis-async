@@ -51,6 +51,8 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
+    volumes:
+      - data:/app/xmls
 
   mongo-pdf-layout:
     container_name: "mongo-pdf-layout"

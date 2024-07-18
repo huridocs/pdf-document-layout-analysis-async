@@ -8,11 +8,13 @@ import sys
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 from starlette.concurrency import run_in_threadpool
+from starlette.responses import PlainTextResponse
 
 from catch_exceptions import catch_exceptions
 from configuration import MONGO_HOST, MONGO_PORT, service_logger
 from PdfFile import PdfFile
 from get_paragraphs import get_paragraphs
+from get_xml import get_xml
 from run import extract_segments_from_file
 
 
@@ -69,3 +71,9 @@ async def async_extraction(tenant, file: UploadFile = File(...)):
 @catch_exceptions
 async def get_paragraphs_endpoint(tenant: str, pdf_file_name: str):
     return await run_in_threadpool(get_paragraphs, app.mongodb_client, tenant, pdf_file_name)
+
+
+@app.get("/get_xml/{xml_file_name}", response_class=PlainTextResponse)
+@catch_exceptions
+async def get_xml_by_name(xml_file_name: str):
+    return await run_in_threadpool(get_xml, xml_file_name)

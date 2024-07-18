@@ -56,14 +56,13 @@ class QueueProcessor:
             xml_file_name = get_xml_name(task)
             extraction_data = extract_segments(task, xml_file_name)
             service_url = f"{SERVICE_HOST}:{SERVICE_PORT}"
-            get_xml_url = f"{SERVICE_HOST}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}"
             extraction_message = ResultMessage(
                 tenant=extraction_data.tenant,
                 task=task.task,
                 params=task.params,
                 success=True,
                 data_url=f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}",
-                file_url=f"{get_xml_url}/get_xml/{xml_file_name}",
+                file_url=f"{service_url}/get_xml/{xml_file_name}",
             )
 
             extraction_data_json = extraction_data.model_dump_json()

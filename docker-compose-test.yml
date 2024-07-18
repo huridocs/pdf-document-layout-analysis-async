@@ -50,6 +50,8 @@ services:
       - "5060:5060"
     networks:
       - network-pdf-layout
+    volumes:
+      - data:/app/xmls
 
   mongo-pdf-layout:
     container_name: "mongo-pdf-layout"
