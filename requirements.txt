@@ -1,6 +1,6 @@
 git+https://github.com/huridocs/pdf-document-layout-analysis@df0e6e0924e8214bf9d050c709e193e93cbf81ff
 graypy==2.1.0
-PyYAML==6.0.1
+PyYAML==6.0.2
 pymongo==4.8.0
 PyRSMQ==0.5.1
 redis==5.0.7
