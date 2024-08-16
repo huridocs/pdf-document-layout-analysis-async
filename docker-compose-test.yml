@@ -43,7 +43,7 @@ services:
   worker-pdf-layout:
     container_name: "worker-pdf-layout"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
-    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.7
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.11
     init: true
     restart: unless-stopped
     ports:

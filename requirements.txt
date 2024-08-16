@@ -1,4 +1,4 @@
-git+https://github.com/huridocs/pdf-document-layout-analysis@df0e6e0924e8214bf9d050c709e193e93cbf81ff
+git+https://github.com/huridocs/pdf-document-layout-analysis@d6cbcc4891391fd9f2fc577c9cef6f9c8f7d9e6f
 graypy==2.1.0
 PyYAML==6.0.1
 pymongo==4.8.0

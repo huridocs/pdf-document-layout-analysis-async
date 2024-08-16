@@ -8,24 +8,18 @@
 
 ## Docker containers
 A redis server is needed to use the service asynchronously. For that matter, it can be used the 
-command `make start:testing` that has a built-in 
+command `make start-test` that has a built-in 
 redis server.
 
 Containers with `make start`
 
-![Alt logo](readme_pictures/docker_compose_up.png?raw=true "docker-compose up")
-
-Containers with `make start:testing`
-
-![Alt logo](readme_pictures/docker_compose_redis.png?raw=true "docker-compose -f docker-compose-service-with-redis.yml up")
+Containers with `make start-test`
 
 
-## How to use it asynchronously
+## How to use it
 1. Send PDF to extract
 
     curl -X POST -F 'file=@/PATH/TO/PDF/pdf_name.pdf' localhost:5051/async_extraction/[tenant_name]
-
-![Alt logo](readme_pictures/send_materials.png?raw=true "Send PDF to extract")
 
 
 2. Add extraction task
@@ -37,9 +31,6 @@ Python code:
     queue = RedisSMQ(host=[redis host], port=[redis port], qname='segmentation_tasks', quiet=True)
     message_json = '{"tenant": "tenant_name", "task": "segmentation", "params": {"filename": "pdf_file_name.pdf"}}'
     message = queue.sendMessage(message_json).exceptions(False).execute()
-
-
-![Alt logo](readme_pictures/extraction.png?raw=true "Add extraction task")
 
 3. Get paragraphs
 
@@ -66,11 +57,8 @@ or in python
     requests.get(results_message.data_url)
     requests.get(results_message.file_url)
 
-![Alt logo](readme_pictures/get_paragraphs.png?raw=true "Get paragraphs")
-
 
 ## HTTP server
-![Alt logo](readme_pictures/http_server.png?raw=true "HTTP server")
 
 The container `HTTP server` is coded using Python 3.9 and uses the [FastApi](https://fastapi.tiangolo.com/) web framework.
 
@@ -84,7 +72,6 @@ The errors are reported to the file `docker_volume/service.log`, if the configur
 
 
 ## Queue processor
-![Alt logo](readme_pictures/queue_processor.png?raw=true "Queue processor")
 
 The container `Queue processor` is coded using Python 3.9, and it is on charge of the communication with redis. 
 
