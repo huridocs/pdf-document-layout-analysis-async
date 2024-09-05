@@ -67,7 +67,7 @@ class TestEndToEnd(TestCase):
         self.assertLess(15, len(extraction_data.paragraphs))
         self.assertEqual(612, extraction_data.page_width)
         self.assertEqual(792, extraction_data.page_height)
-        self.assertEqual("A /INF/76/1", extraction_data.paragraphs[0].text)
+        self.assertTrue(extraction_data.paragraphs[0].text in ["A /INF/76/1", "United Nations"])
         self.assertEqual({1, 2}, {x.page_number for x in extraction_data.paragraphs})
 
         response = requests.get(extraction_message.file_url)

@@ -17,7 +17,6 @@ from configuration import (
     TASK_QUEUE_NAME,
     SERVICE_HOST,
     SERVICE_PORT,
-    DOCUMENT_LAYOUT_ANALYSIS_PORT,
     ENVIRONMENT,
     SENTRY_DSN,
     service_logger,

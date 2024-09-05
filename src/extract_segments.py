@@ -1,5 +1,3 @@
-from time import sleep
-
 from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger
 from data_model.SegmentBox import SegmentBox
 from PdfFile import PdfFile
@@ -14,11 +12,12 @@ def get_xml_name(task: Task) -> str:
 
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
     pdf_file = PdfFile(task.tenant)
+    data = {"fast": "True"}
+    url = DOCUMENT_LAYOUT_ANALYSIS_URL + (f"/save_xml/{xml_file_name}" if xml_file_name else "")
 
     with open(pdf_file.get_path(task.params.filename), "rb") as stream:
         files = {"file": stream}
-        url = DOCUMENT_LAYOUT_ANALYSIS_URL + (f"/save_xml/{xml_file_name}" if xml_file_name else "")
-        results = requests.post(url, files=files)
+        results = requests.post(url, files=files, data=data)
 
     if results.status_code != 200:
         service_logger.error(f"Response error: {results.status_code} - {results.text}")
