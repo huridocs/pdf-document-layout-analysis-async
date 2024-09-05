@@ -7,6 +7,7 @@ import requests
 
 RETRIES = 3
 
+
 def get_xml_name(task: Task) -> str:
     return f"{task.tenant}__{task.params.filename.lower().replace('.pdf', '.xml')}"
 
