@@ -69,6 +69,18 @@ class QueueProcessor:
             service_logger.info(f"Results Redis message: {extraction_message}")
             self.results_queue.sendMessage(delay=5).message(extraction_message.model_dump_json()).execute()
 
+        except RuntimeError:
+            extraction_message = ResultMessage(
+                tenant=task.tenant,
+                task=task.task,
+                params=task.params,
+                success=False,
+                error_message="Error processing the pdf",
+            )
+
+            self.results_queue.sendMessage().message(extraction_message.model_dump_json()).execute()
+            service_logger.info(extraction_message.model_dump_json(), exc_info=True)
+
         except FileNotFoundError:
             extraction_message = ResultMessage(
                 tenant=task.tenant,

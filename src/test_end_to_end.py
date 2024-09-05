@@ -24,7 +24,7 @@ class TestEndToEnd(TestCase):
         pdf_file_name = "error_pdf.pdf"
         queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_tasks")
 
-        with open(f"{configuration.APP_PATH}/test_files/error_pdf.pdf", "rb") as stream:
+        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
             files = {"file": stream}
             requests.post(f"{self.service_url}/async_extraction/{tenant}", files=files)
 
