@@ -26,9 +26,6 @@ def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
         if results and results.status_code == 200:
             break
 
-    if not results:
-        raise SystemError(f"The PDF document layout analysis container did not respond with \n {task}")
-
     if results.status_code != 200:
         raise RuntimeError(f"Error processing PDF document: {results.status_code} - {results.text}")
 
