@@ -4,9 +4,7 @@ from os.path import join
 from pathlib import Path
 import graypy
 
-SERVICE_NAME = "segmentation"
-TASK_QUEUE_NAME = SERVICE_NAME + "_tasks"
-RESULTS_QUEUE_NAME = SERVICE_NAME + "_results"
+QUEUES_NAMES = os.environ.get("QUEUES_NAMES", "segmentation")
 
 SERVICE_HOST = os.environ.get("SERVICE_HOST", "http://127.0.0.1")
 SERVICE_PORT = os.environ.get("SERVICE_PORT", "5051")

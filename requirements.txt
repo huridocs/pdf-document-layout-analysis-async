@@ -1,9 +1,8 @@
 git+https://github.com/huridocs/pdf-document-layout-analysis@d6cbcc4891391fd9f2fc577c9cef6f9c8f7d9e6f
+git+https://github.com/huridocs/queue-processor@26c9413ac4fd950ace4ee542d6734e6959e10ea4
 graypy==2.1.0
 PyYAML==6.0.1
 pymongo==4.8.0
-PyRSMQ==0.5.1
-redis==5.0.7
 httpx==0.27.0
 sentry-sdk==2.8.0
 
