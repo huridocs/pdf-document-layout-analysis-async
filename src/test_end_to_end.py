@@ -6,7 +6,6 @@ import requests
 from rsmq import RedisSMQ
 
 import configuration
-from data_model.ExtractionData import ExtractionData
 from data_model.ResultMessage import ResultMessage
 from data_model.Params import Params
 from data_model.Task import Task
@@ -54,17 +53,16 @@ class TestEndToEnd(TestCase):
         response = requests.get(extraction_message.data_url)
 
         extraction_data_dict = json.loads(response.json())
-        extraction_data = ExtractionData(**extraction_data_dict)
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(tenant, extraction_message.tenant)
         self.assertEqual(pdf_file_name, extraction_message.params.filename)
         self.assertEqual(True, extraction_message.success)
-        self.assertLess(15, len(extraction_data.paragraphs))
-        self.assertEqual(612, extraction_data.page_width)
-        self.assertEqual(792, extraction_data.page_height)
-        self.assertTrue(extraction_data.paragraphs[0].text in ["A /INF/76/1", "United Nations"])
-        self.assertEqual({1, 2}, {x.page_number for x in extraction_data.paragraphs})
+        self.assertLess(15, len(extraction_data_dict["paragraphs"]))
+        self.assertEqual(612, extraction_data_dict["page_width"])
+        self.assertEqual(792, extraction_data_dict["page_height"])
+        self.assertTrue(extraction_data_dict["paragraphs"][0]["text"] in ["A /INF/76/1", "United Nations"])
+        self.assertEqual({1, 2}, {x["page_number"] for x in extraction_data_dict["paragraphs"]})
 
         response = requests.get(extraction_message.file_url)
         self.assertEqual(200, response.status_code)
