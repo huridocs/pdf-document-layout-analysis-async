@@ -24,11 +24,11 @@ jobs:
     - name: Free up space
       run: make free_up_space
 
-    - name: Install venv
-      run: make install_venv
+    - name: Install dependencies
+      run: pip3 install black pytest
 
     - name: Lint with black
-      run: make check_format
+      run: black --line-length 125 . --check
 
     - name: Start service
       run: make start_detached
@@ -43,4 +43,4 @@ jobs:
         interval: 500
 
     - name: Test with unittest
-      run: make test
+      run: cd src; python3 -m pytest
