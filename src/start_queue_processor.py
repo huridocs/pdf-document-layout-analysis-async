@@ -88,5 +88,5 @@ if __name__ == "__main__":
         pass
 
     queues_names = QUEUES_NAMES.split(" ")
-    queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, service_logger)
+    queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, service_logger, 7)
     queue_processor.start(process)

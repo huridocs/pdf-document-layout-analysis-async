@@ -9,7 +9,9 @@ RETRIES = 3
 
 
 def get_xml_name(task: Task) -> str:
-    return f"{task.tenant}__{task.params.filename.lower().replace('.pdf', '.xml')}"
+    xml_file_name = f"{task.tenant}__{task.params.filename.lower().replace('.pdf', '.xml')}"
+    xml_file_name = xml_file_name if xml_file_name.endswith(".xml") else f"{xml_file_name}.xml"
+    return xml_file_name
 
 
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:

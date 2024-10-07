@@ -1,7 +1,7 @@
 services:
   api-pdf-layout:
     container_name: "api-pdf-layout"
-    entrypoint: [ "gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
     init: true
     restart: unless-stopped
     build:
@@ -20,7 +20,7 @@ services:
 
   queue-processor-pdf-layout-gpu:
     container_name: "queue-processor-pdf-layout-gpu"
-    entrypoint: [ "python", "-m", "src.QueueProcessor" ]
+    entrypoint: [ "python", "-m", "src.start_queue_processor" ]
     init: true
     restart: unless-stopped
     build:
@@ -38,19 +38,12 @@ services:
       - mongo-pdf-layout
 
   worker-pdf-layout-gpu:
-    container_name: "worker-pdf-layout-gpu"
+    container_name: "worker-pdf-layout-no-gpu"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
-    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.11
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.15
     init: true
     restart: unless-stopped
     network_mode: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
     volumes:
       - data:/app/xmls
 
