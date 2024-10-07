@@ -22,7 +22,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install dependencies
-      run: pip3 install black pytest
+      run: pip3 install black pytest PyRSMQ==0.5.1 redis==5.0.7 requests==2.32.3
 
     - name: Lint with black
       run: black --line-length 125 . --check
