@@ -40,7 +40,7 @@ services:
   worker-pdf-layout-gpu:
     container_name: "worker-pdf-layout-no-gpu"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
-    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.15
+    image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.16
     init: true
     restart: unless-stopped
     network_mode: host
