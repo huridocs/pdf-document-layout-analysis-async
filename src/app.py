@@ -1,10 +1,11 @@
 import os
 from contextlib import asynccontextmanager
+from pdf_token_type_labels.TokenType import TokenType
 
 import pymongo
 from fastapi import FastAPI, HTTPException, File, UploadFile
 import sys
-
+import json
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 from starlette.concurrency import run_in_threadpool
@@ -13,6 +14,7 @@ from starlette.responses import PlainTextResponse
 from catch_exceptions import catch_exceptions
 from configuration import MONGO_HOST, MONGO_PORT, service_logger
 from PdfFile import PdfFile
+from data_model.ExtractionData import ExtractionData
 from get_paragraphs import get_paragraphs
 from get_xml import get_xml
 from run import extract_segments_from_file
@@ -71,6 +73,16 @@ async def async_extraction(tenant, file: UploadFile = File(...)):
 @catch_exceptions
 async def get_paragraphs_endpoint(tenant: str, pdf_file_name: str):
     return await run_in_threadpool(get_paragraphs, app.mongodb_client, tenant, pdf_file_name)
+
+
+@app.post("/set_paragraphs")
+@catch_exceptions
+async def set_paragraphs(extraction_data: ExtractionData):
+    types_to_keep = [TokenType.LIST_ITEM, TokenType.TITLE, TokenType.TEXT, TokenType.PAGE_HEADER, TokenType.SECTION_HEADER]
+    extraction_data.paragraphs = [x for x in extraction_data.paragraphs if x.type in types_to_keep]
+    pdf_paragraph_db = app.mongodb_client["pdf_paragraph"]
+    pdf_paragraph_db.paragraphs.insert_one(json.loads(extraction_data.model_dump_json()))
+    return "paragraphs saved"
 
 
 @app.get("/get_xml/{xml_file_name}", response_class=PlainTextResponse)

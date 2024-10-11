@@ -88,11 +88,76 @@ class TestEndToEnd(TestCase):
         self.assertEqual(response_json[0]["page_number"], 1)
         self.assertEqual(response_json[1]["page_number"], 2)
 
+    def test_filter_segments(self):
+        tenant = "endpoint_test"
+        file_name = "file_name"
+
+        json_data = {
+            "tenant": tenant,
+            "file_name": file_name,
+            "page_width": 600,
+            "page_height": 700,
+            "paragraphs": [
+                {
+                    "left": 1,
+                    "top": 2,
+                    "width": 3,
+                    "height": 4,
+                    "page_width": 5,
+                    "page_height": 6,
+                    "page_number": 7,
+                    "text": "text1",
+                    "type": "Page header",
+                },
+                {
+                    "left": 1,
+                    "top": 2,
+                    "width": 3,
+                    "height": 4,
+                    "page_width": 5,
+                    "page_height": 6,
+                    "page_number": 7,
+                    "text": "text2",
+                    "type": "Page footer",
+                },
+            ],
+        }
+
+        requests.post(f"{self.service_url}/set_paragraphs", json=json_data)
+
+        queue = RedisSMQ(host="127.0.0.1", port="6379", qname="extraction_tasks")
+        task = Task(tenant=tenant, task="extraction", params=Params(filename=file_name))
+        queue.sendMessage().message(str(task.model_dump_json())).execute()
+
+        extraction_message = self.get_redis_message()
+
+        response = requests.get(extraction_message.data_url)
+
+        extraction_data = json.loads(response.json())
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(tenant, extraction_data["tenant"])
+        self.assertEqual(file_name, extraction_data["file_name"])
+        self.assertEqual(600, extraction_data["page_width"])
+        self.assertEqual(700, extraction_data["page_height"])
+        self.assertEqual(1, len(extraction_data["paragraphs"]))
+
+        self.assertEqual(1, extraction_data["paragraphs"][0]["left"])
+        self.assertEqual(2, extraction_data["paragraphs"][0]["top"])
+        self.assertEqual(3, extraction_data["paragraphs"][0]["width"])
+        self.assertEqual(4, extraction_data["paragraphs"][0]["height"])
+        self.assertEqual(5, extraction_data["paragraphs"][0]["page_width"])
+        self.assertEqual(6, extraction_data["paragraphs"][0]["page_height"])
+        self.assertEqual(7, extraction_data["paragraphs"][0]["page_number"])
+        self.assertEqual("text1", extraction_data["paragraphs"][0]["text"])
+        self.assertEqual("Page header", extraction_data["paragraphs"][0]["type"])
+
     @staticmethod
     def get_redis_message() -> ResultMessage:
-        queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_results", quiet=True)
-
         for i in range(80):
+            queue_name = "segmentation_results" if i % 2 else "extraction_results"
+            queue = RedisSMQ(host="127.0.0.1", port="6379", qname=queue_name, quiet=True)
+
             time.sleep(3)
             message = queue.receiveMessage().exceptions(False).execute()
             if message:

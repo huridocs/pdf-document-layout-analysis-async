@@ -58,8 +58,18 @@ def process(message):
 
 def process_task(task):
     xml_file_name = get_xml_name(task)
-    extraction_data = extract_segments(task, xml_file_name)
     service_url = f"{SERVICE_HOST}:{SERVICE_PORT}"
+    if task.task == "extraction":
+        return ResultMessage(
+            tenant=task.tenant,
+            task=task.task,
+            params=task.params,
+            success=True,
+            data_url=f"{service_url}/get_paragraphs/{task.tenant}/{task.params.filename}",
+            file_url="",
+        )
+    extraction_data = extract_segments(task, xml_file_name)
+
     extraction_message = ResultMessage(
         tenant=extraction_data.tenant,
         task=task.task,
