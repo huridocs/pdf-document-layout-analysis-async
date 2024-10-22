@@ -1,4 +1,4 @@
-from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger
+from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger, USE_FAST
 from data_model.SegmentBox import SegmentBox
 from PdfFile import PdfFile
 from data_model.ExtractionData import ExtractionData
@@ -16,7 +16,7 @@ def get_xml_name(task: Task) -> str:
 
 def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
     pdf_file = PdfFile(task.tenant)
-    data = {"fast": "True"}
+    data = {"fast": "True" if USE_FAST else "False"}
     url = DOCUMENT_LAYOUT_ANALYSIS_URL + (f"/save_xml/{xml_file_name}" if xml_file_name else "")
 
     results = None
