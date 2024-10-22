@@ -1,5 +1,5 @@
-git+https://github.com/huridocs/pdf-document-layout-analysis@7cde0c113a5a312decd8a95fd759b48399ef4fb5
-git+https://github.com/huridocs/queue-processor@d30bf31e614694cf65f7117cd28cabf4afedfe55
+git+https://github.com/huridocs/pdf-document-layout-analysis@c6813b052df5ba3df454860b11a8d77630e14edb
+git+https://github.com/huridocs/queue-processor@716ddf050c59035583b0852dc0b78a7860ce5c05
 graypy==2.1.0
 PyYAML==6.0.1
 pymongo==4.8.0
