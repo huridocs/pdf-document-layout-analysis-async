@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from os.path import join
 
 import pymongo
 from fastapi import FastAPI, HTTPException, File, UploadFile
@@ -8,10 +9,10 @@ import sys
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 from starlette.concurrency import run_in_threadpool
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, FileResponse
 
 from catch_exceptions import catch_exceptions
-from configuration import MONGO_HOST, MONGO_PORT, service_logger
+from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT
 from PdfFile import PdfFile
 from get_paragraphs import get_paragraphs
 from get_xml import get_xml
@@ -77,3 +78,20 @@ async def get_paragraphs_endpoint(tenant: str, pdf_file_name: str):
 @catch_exceptions
 async def get_xml_by_name(xml_file_name: str):
     return await run_in_threadpool(get_xml, xml_file_name)
+
+
+@app.post("/upload/{namespace}")
+async def upload_pdf(namespace, file: UploadFile = File(...)):
+    filename = file.filename
+    pdf_file = PdfFile(namespace)
+    pdf_file.save(pdf_file_name=filename, file=file.file.read())
+    return "File uploaded"
+
+
+@app.get("/processed_pdf/{namespace}/{pdf_file_name}", response_class=FileResponse)
+async def processed_pdf(namespace: str, pdf_file_name: str):
+    return FileResponse(
+        path=join(OCR_OUTPUT, namespace, pdf_file_name),
+        media_type="application/pdf",
+        filename=pdf_file_name,
+    )

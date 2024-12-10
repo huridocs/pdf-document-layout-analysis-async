@@ -26,6 +26,8 @@ APP_PATH = Path(__file__).parent.absolute()
 ROOT_PATH = Path(__file__).parent.parent.absolute()
 DATA_PATH = join(ROOT_PATH, "data")
 
+OCR_OUTPUT = Path(DATA_PATH, "ocr_output")
+
 handlers = [logging.StreamHandler()]
 if GRAYLOG_IP:
     handlers.append(graypy.GELFUDPHandler(GRAYLOG_IP, 12201, localname="pdf_paragraphs_extraction"))

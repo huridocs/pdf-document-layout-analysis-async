@@ -1,4 +1,6 @@
-from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger, USE_FAST
+from pathlib import Path
+
+from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger, USE_FAST, OCR_OUTPUT
 from data_model.SegmentBox import SegmentBox
 from PdfFile import PdfFile
 from data_model.ExtractionData import ExtractionData
@@ -39,3 +41,24 @@ def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
         page_height=0 if not segments else segments[0].page_height,
         page_width=0 if not segments else segments[0].page_width,
     )
+
+
+def ocr_pdf(task: Task) -> bool:
+    pdf_file = PdfFile(task.tenant)
+    path = pdf_file.get_path(task.params.filename)
+
+    if not path.exists():
+        raise FileNotFoundError(f"No PDF to OCR")
+
+    data = {"language": task.params.language}
+    for i in range(RETRIES):
+        with open(path, "rb") as stream:
+            files = {"file": stream}
+            results = requests.post(f"{DOCUMENT_LAYOUT_ANALYSIS_URL}/ocr", files=files, data=data)
+
+        if results and results.status_code == 200:
+            results_path = Path(OCR_OUTPUT, task.tenant, task.params.filename)
+            results_path.write_bytes(results.content)
+            return True
+
+    raise RuntimeError(f"Error OCR document: {results.status_code} - {results.text}")

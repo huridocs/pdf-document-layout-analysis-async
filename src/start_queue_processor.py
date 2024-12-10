@@ -20,7 +20,7 @@ from configuration import (
 )
 from data_model.ResultMessage import ResultMessage
 from data_model.Task import Task
-from extract_segments import get_xml_name, extract_segments
+from extract_segments import get_xml_name, extract_segments, ocr_pdf
 
 
 def get_failed_results_message(task: Task, message: str) -> ResultMessage:
@@ -33,6 +33,22 @@ def get_failed_results_message(task: Task, message: str) -> ResultMessage:
     )
 
 
+def ocr_pdf_task(task):
+    ocr_pdf(task)
+
+    processed_pdf_url = f"{SERVICE_HOST}:{SERVICE_PORT}/processed_pdf/{task.tenant}/{task.params.filename}"
+    extraction_message = ResultMessage(
+        tenant=task.tenant,
+        task=task.task,
+        params=task.params,
+        success=True,
+        file_url=processed_pdf_url,
+    )
+
+    service_logger.info(f"OCR success: {extraction_message.model_dump_json()}")
+    return extraction_message.model_dump_json()
+
+
 def process(message):
     try:
         task = Task(**message)
@@ -42,15 +58,19 @@ def process(message):
 
     try:
         service_logger.info(f"Processing Redis message: {message}")
+
+        if task.task == "ocr":
+            return ocr_pdf_task(task)
+
         return process_task(task).model_dump_json()
     except RuntimeError:
-        extraction_message = get_failed_results_message(task, "Error processing PDF document")
+        extraction_message = get_failed_results_message(task, "Error processing PDF")
         service_logger.error(extraction_message.model_dump_json(), exc_info=True)
     except FileNotFoundError:
-        extraction_message = get_failed_results_message(task, "Error getting the xml from the pdf")
+        extraction_message = get_failed_results_message(task, "Error FileNotFoundError")
         service_logger.error(extraction_message.model_dump_json(), exc_info=True)
     except Exception:
-        extraction_message = get_failed_results_message(task, "Error getting segments")
+        extraction_message = get_failed_results_message(task, "Error")
         service_logger.error(extraction_message.model_dump_json(), exc_info=True)
 
     return extraction_message.model_dump_json()
