@@ -11,6 +11,7 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import sentry_sdk
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import PlainTextResponse, FileResponse
+from starlette.background import BackgroundTask
 
 from catch_exceptions import catch_exceptions
 from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
@@ -97,8 +98,8 @@ async def upload_pdf(namespace, file: UploadFile = File(...)):
 
 @app.get("/processed_pdf/{namespace}/{pdf_file_name}", response_class=FileResponse)
 async def processed_pdf(namespace: str, pdf_file_name: str):
+    path = join(OCR_OUTPUT, namespace, pdf_file_name)
+
     return FileResponse(
-        path=join(OCR_OUTPUT, namespace, pdf_file_name),
-        media_type="application/pdf",
-        filename=pdf_file_name,
+        path=path, media_type="application/pdf", filename=pdf_file_name, background=BackgroundTask(os.remove, path)
     )
