@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger, USE_FAST, OCR_OUTPUT
@@ -58,7 +59,9 @@ def ocr_pdf(task: Task) -> bool:
 
         if results and results.status_code == 200:
             results_path = Path(OCR_OUTPUT, task.tenant, task.params.filename)
+            os.makedirs(results_path.parent, exist_ok=True)
             results_path.write_bytes(results.content)
+            path.unlink()
             return True
 
     raise RuntimeError(f"Error OCR document: {results.status_code} - {results.text}")

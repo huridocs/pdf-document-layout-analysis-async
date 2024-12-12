@@ -88,13 +88,66 @@ class TestEndToEnd(TestCase):
         self.assertEqual(response_json[0]["page_number"], 1)
         self.assertEqual(response_json[1]["page_number"], 2)
 
+    def async_ocr(self, pdf_file_name, language) -> list[dict[str, any]]:
+        namespace = "async_ocr"
+
+        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+            files = {"file": stream}
+            requests.post(f"{self.service_url}/upload/{namespace}", files=files)
+
+        task = Task(
+            tenant=namespace,
+            task="ocr",
+            params=Params(filename=pdf_file_name, language=language),
+        )
+
+        queue = RedisSMQ(host="127.0.0.1", port="6379", qname="ocr_tasks")
+        queue.sendMessage().message(str(task.model_dump_json())).execute()
+
+        extraction_message = self.get_redis_message()
+        ocr_response = requests.get(extraction_message.file_url)
+        segmentation_response = requests.post(f"{self.service_url}", files={"file": ocr_response.content})
+        return segmentation_response.json()
+
+    def test_async_ocr(self):
+        paragraphs_per_page = self.async_ocr("ocr-sample-english.pdf", language="en")
+        self.assertEqual(1, len(paragraphs_per_page))
+        self.assertEqual("Test  text  OCR", paragraphs_per_page[0]["text"])
+
+    def test_async_ocr_specific_language(self):
+        paragraphs_per_page = self.async_ocr("ocr-sample-french.pdf", language="fr")
+        self.assertEqual(1, len(paragraphs_per_page))
+        self.assertEqual("Où  puis-je  m'en  procurer", paragraphs_per_page[0]["text"])
+
+    def test_error_ocr(self):
+        tenant = "end_to_end_test_error"
+        pdf_file_name = "error_pdf.pdf"
+        queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_tasks")
+
+        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+            files = {"file": stream}
+            requests.post(f"{self.service_url}/upload/{tenant}", files=files)
+
+        task = Task(tenant=tenant, task="ocr", params=Params(filename=pdf_file_name))
+
+        queue.sendMessage().message(task.model_dump_json()).execute()
+
+        extraction_message = self.get_redis_message()
+
+        self.assertEqual(tenant, extraction_message.tenant)
+        self.assertEqual("ocr", extraction_message.task)
+        self.assertEqual("error_pdf.pdf", extraction_message.params.filename)
+        self.assertEqual(False, extraction_message.success)
+
     @staticmethod
     def get_redis_message() -> ResultMessage:
-        queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_results", quiet=True)
+        queues_names = ["segmentation", "ocr"]
 
-        for i in range(80):
-            time.sleep(3)
-            message = queue.receiveMessage().exceptions(False).execute()
-            if message:
-                queue.deleteMessage(id=message["id"]).execute()
-                return ResultMessage(**json.loads(message["message"]))
+        for i in range(160):
+            for queue_name in queues_names:
+                time.sleep(1)
+                queue = RedisSMQ(host="127.0.0.1", port="6379", qname=f"{queue_name}_results", quiet=True)
+                message = queue.receiveMessage().exceptions(False).execute()
+                if message:
+                    queue.deleteMessage(id=message["id"]).execute()
+                    return ResultMessage(**json.loads(message["message"]))

@@ -1,3 +1,5 @@
+from sys import maxsize
+
 from redis import exceptions
 from rsmq import RedisSMQ
 
@@ -10,25 +12,16 @@ REDIS_PORT = "6379"
 def delete_queues():
     try:
         for queue_name in QUEUES_NAMES.split():
-            queue = RedisSMQ(
-                host=REDIS_HOST,
-                port=REDIS_PORT,
-                qname=queue_name + "_tasks",
-                quiet=False,
-            )
+            for suffix in ["_tasks", "_results"]:
+                queue = RedisSMQ(
+                    host=REDIS_HOST,
+                    port=REDIS_PORT,
+                    qname=queue_name + suffix,
+                    quiet=False,
+                )
 
-            queue.deleteQueue().exceptions(False).execute()
-            queue.createQueue().exceptions(False).execute()
-
-            queue = RedisSMQ(
-                host=REDIS_HOST,
-                port=REDIS_PORT,
-                qname=queue_name + "_results",
-                quiet=False,
-            )
-
-            queue.deleteQueue().exceptions(False).execute()
-            queue.createQueue().exceptions(False).execute()
+                queue.deleteQueue().exceptions(False).execute()
+                queue.createQueue(maxsize=-1, vt=120).exceptions(False).execute()
 
         print("Queues properly deleted")
 

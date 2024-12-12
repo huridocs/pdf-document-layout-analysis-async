@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from os.path import join
 
 import pymongo
+import requests
 from fastapi import FastAPI, HTTPException, File, UploadFile
 import sys
 
@@ -12,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.responses import PlainTextResponse, FileResponse
 
 from catch_exceptions import catch_exceptions
-from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT
+from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
 from PdfFile import PdfFile
 from get_paragraphs import get_paragraphs
 from get_xml import get_xml
@@ -42,9 +43,15 @@ except Exception:
 
 
 @app.get("/")
-async def info():
+async def root():
     service_logger.info("Get PDF paragraphs info endpoint")
     return sys.version
+
+
+@app.get("/info")
+@catch_exceptions
+async def info():
+    return requests.get(f"{DOCUMENT_LAYOUT_ANALYSIS_URL}/info").json()
 
 
 @app.get("/error")
