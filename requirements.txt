@@ -4,5 +4,5 @@ pymongo==4.8.0
 httpx==0.27.0
 sentry-sdk==2.8.0
 git+https://github.com/huridocs/queue-processor@d528b7d37c6d9b8f7ec352eec4a8ebed64ffb248
-git+https://github.com/huridocs/pdf-document-layout-analysis@ac8d850dfb294f8b8f828920d5d1ac9189be1e9f
+git+https://github.com/huridocs/pdf-document-layout-analysis@84ed069c6d23993fcefa5a3ff89d2ef2b4bb1825
 
