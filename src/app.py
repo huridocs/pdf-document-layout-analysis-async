@@ -89,7 +89,7 @@ async def get_xml_by_name(xml_file_name: str):
 
 
 @app.post("/upload/{namespace}")
-async def upload_pdf(namespace, file: UploadFile = File(...)):
+async def upload_for_ocr_pdf(namespace, file: UploadFile = File(...)):
     filename = file.filename
     pdf_file = PdfFile(namespace)
     pdf_file.save(pdf_file_name=filename, file=file.file.read())
