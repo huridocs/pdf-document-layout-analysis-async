@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, service_logger, USE_FAST, OCR_OUTPUT
+from configuration import DOCUMENT_LAYOUT_ANALYSIS_URL, USE_FAST, OCR_OUTPUT
 from data_model.SegmentBox import SegmentBox
 from PdfFile import PdfFile
 from data_model.ExtractionData import ExtractionData

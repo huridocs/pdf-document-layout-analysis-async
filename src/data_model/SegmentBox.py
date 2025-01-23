@@ -1,5 +1,6 @@
-from pdf_token_type_labels.TokenType import TokenType
 from pydantic import BaseModel
+
+from data_model.TokenType import TokenType
 
 
 class SegmentBox(BaseModel):

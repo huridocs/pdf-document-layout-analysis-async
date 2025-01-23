@@ -1,8 +1,12 @@
+fastapi==0.111.1
+python-multipart==0.0.9
+uvicorn==0.30.3
+gunicorn==22.0.0
+requests==2.32.3
 graypy==2.1.0
 PyYAML==6.0.1
 pymongo==4.8.0
 httpx==0.27.0
 sentry-sdk==2.8.0
 git+https://github.com/huridocs/queue-processor@84ed069c6d23993fcefa5a3ff89d2ef2b4bb1825
-git+https://github.com/huridocs/pdf-document-layout-analysis@5d14938e4271e853335f0929e1a5d46556f1e6de
 
