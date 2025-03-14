@@ -5,7 +5,7 @@ from unittest import TestCase
 import requests
 from rsmq import RedisSMQ
 
-import configuration
+from configuration import APP_PATH
 from domain.ResultMessage import ResultMessage
 from domain.Params import Params
 from domain.Task import Task
@@ -19,7 +19,7 @@ class TestEndToEnd(TestCase):
         pdf_file_name = "error_pdf.pdf"
         queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_tasks")
 
-        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/{pdf_file_name}", "rb") as stream:
             files = {"file": stream}
             requests.post(f"{self.service_url}/async_extraction/{tenant}", files=files)
 
@@ -37,7 +37,7 @@ class TestEndToEnd(TestCase):
         tenant = "end_to_end_test"
         pdf_file_name = "test.pdf"
 
-        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/{pdf_file_name}", "rb") as stream:
             files = {"file": stream}
             requests.post(f"{self.service_url}/async_extraction/{tenant}", files=files)
 
@@ -69,7 +69,7 @@ class TestEndToEnd(TestCase):
         self.assertTrue('<?xml version="1.0" encoding="UTF-8"?>' in str(response.content))
 
     def test_blank_pdf(self):
-        with open(f"{configuration.APP_PATH}/test_files/blank.pdf", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/blank.pdf", "rb") as stream:
             files = {"file": stream}
             response = requests.post(f"{self.service_url}", files=files)
 
@@ -78,7 +78,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(response_json, [])
 
     def test_one_token_per_page_pdf(self):
-        with open(f"{configuration.APP_PATH}/test_files/one_token_per_page.pdf", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/one_token_per_page.pdf", "rb") as stream:
             files = {"file": stream}
             response = requests.post(f"{self.service_url}", files=files)
 
@@ -91,7 +91,7 @@ class TestEndToEnd(TestCase):
     def async_ocr(self, pdf_file_name, language) -> list[dict[str, any]]:
         namespace = "async_ocr"
 
-        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/{pdf_file_name}", "rb") as stream:
             files = {"file": stream}
             requests.post(f"{self.service_url}/upload/{namespace}", files=files)
 
@@ -124,7 +124,7 @@ class TestEndToEnd(TestCase):
         pdf_file_name = "error_pdf.pdf"
         queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_tasks")
 
-        with open(f"{configuration.APP_PATH}/test_files/{pdf_file_name}", "rb") as stream:
+        with open(f"{APP_PATH}/tests/test_files/{pdf_file_name}", "rb") as stream:
             files = {"file": stream}
             requests.post(f"{self.service_url}/upload/{tenant}", files=files)
 

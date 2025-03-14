@@ -1,7 +1,7 @@
 services:
   api-pdf-layout:
     container_name: "api-pdf-layout"
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5051", "--timeout", "300" ]
     init: true
     restart: unless-stopped
     build:
@@ -19,7 +19,7 @@ services:
 
   queue-processor-pdf-layout-gpu:
     container_name: "queue-processor-pdf-layout-gpu"
-    entrypoint: [ "python", "-m", "src.drivers.queues_processors.start_queue_processor" ]
+    entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
     init: true
     restart: unless-stopped
     build:
@@ -37,7 +37,7 @@ services:
 
   worker-pdf-layout-gpu:
     container_name: "worker-pdf-layout-no-gpu"
-    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "drivers.rest.app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
+    entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
     image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.23
     init: true
     restart: unless-stopped
