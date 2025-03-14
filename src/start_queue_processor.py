@@ -17,6 +17,7 @@ from configuration import (
     SENTRY_DSN,
     service_logger,
     QUEUES_NAMES,
+    USE_LOCAL_SEGMENTATION,
 )
 from data_model.ResultMessage import ResultMessage
 from data_model.Task import Task

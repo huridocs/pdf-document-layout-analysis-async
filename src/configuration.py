@@ -16,6 +16,7 @@ MONGO_PORT = os.environ.get("MONGO_PORT", "25017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 USE_FAST = os.environ.get("USE_FAST", "True").lower() in ("true", "1", "t")
+USE_LOCAL_SEGMENTATION = os.environ.get("USE_LOCAL_SEGMENTATION", "True").lower() in ("true", "1", "t")
 
 
 DOCUMENT_LAYOUT_ANALYSIS_PORT = os.environ.get("DOCUMENT_LAYOUT_ANALYSIS_PORT", "5060")

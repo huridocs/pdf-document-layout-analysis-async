@@ -12,7 +12,7 @@ def extract_segments_from_file(file: UploadFile):
     default_tenant = "default"
     task = Task(tenant=default_tenant, task="extract_segments", params=Params(filename=filename))
     PdfFile(default_tenant).save(pdf_file_name=filename, file=file.file.read())
-    extraction_data = extract_segments(task)
+    extraction_data = extract_segments(task, "default.xml")
     return extraction_data.paragraphs
 
 
