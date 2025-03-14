@@ -17,11 +17,10 @@ from configuration import (
     SENTRY_DSN,
     service_logger,
     QUEUES_NAMES,
-    USE_LOCAL_SEGMENTATION,
 )
-from data_model.ResultMessage import ResultMessage
-from data_model.Task import Task
-from extract_segments import get_xml_name, extract_segments, ocr_pdf
+from domain.ResultMessage import ResultMessage
+from domain.Task import Task
+from use_cases.extract_segments_use_case import ocr_pdf, get_xml_name, extract_segments
 
 
 def get_failed_results_message(task: Task, message: str) -> ResultMessage:

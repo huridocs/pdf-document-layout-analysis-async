@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from data_model.TokenType import TokenType
+from domain.TokenType import TokenType
 
 
 class SegmentBox(BaseModel):

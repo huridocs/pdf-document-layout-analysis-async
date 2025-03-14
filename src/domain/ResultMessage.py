@@ -2,7 +2,7 @@ from typing import Union
 
 from pydantic import BaseModel
 
-from data_model.Params import Params
+from domain.Params import Params
 
 
 class ResultMessage(BaseModel):

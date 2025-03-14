@@ -1,4 +1,4 @@
-from data_model.ExtractionData import ExtractionData
+from domain.ExtractionData import ExtractionData
 
 
 def get_paragraphs(mongodb_client, tenant, pdf_file_name):

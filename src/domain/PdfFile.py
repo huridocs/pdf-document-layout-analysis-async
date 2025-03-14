@@ -14,3 +14,6 @@ class PdfFile:
     def save(self, pdf_file_name: str, file: bytes):
         os.makedirs(f"{configuration.DATA_PATH}/{self.tenant}", exist_ok=True)
         self.get_path(pdf_file_name).write_bytes(file)
+
+    def remove(self, pdf_file_name: str):
+        self.get_path(pdf_file_name).unlink(missing_ok=True)

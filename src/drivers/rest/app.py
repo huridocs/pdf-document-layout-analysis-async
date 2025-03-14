@@ -13,12 +13,12 @@ from starlette.concurrency import run_in_threadpool
 from starlette.responses import PlainTextResponse, FileResponse
 from starlette.background import BackgroundTask
 
-from catch_exceptions import catch_exceptions
 from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
-from PdfFile import PdfFile
-from get_paragraphs import get_paragraphs
-from get_xml import get_xml
-from run import extract_segments_from_file
+from domain.PdfFile import PdfFile
+from drivers.rest.catch_exceptions import catch_exceptions
+from drivers.queues_processor.run import extract_segments_from_file
+from drivers.rest.get_paragraphs import get_paragraphs
+from drivers.rest.get_xml import get_xml
 
 
 @asynccontextmanager

@@ -6,9 +6,9 @@ import requests
 from rsmq import RedisSMQ
 
 import configuration
-from data_model.ResultMessage import ResultMessage
-from data_model.Params import Params
-from data_model.Task import Task
+from domain.ResultMessage import ResultMessage
+from domain.Params import Params
+from domain.Task import Task
 
 
 class TestEndToEnd(TestCase):

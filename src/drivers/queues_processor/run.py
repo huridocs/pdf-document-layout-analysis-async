@@ -1,18 +1,20 @@
 from fastapi import UploadFile
 from rsmq import RedisSMQ
 
-from PdfFile import PdfFile
-from data_model.Params import Params
-from data_model.Task import Task
-from extract_segments import extract_segments
+from domain.PdfFile import PdfFile
+from domain.Params import Params
+from domain.Task import Task
+from use_cases.extract_segments_use_case import extract_segments
 
 
 def extract_segments_from_file(file: UploadFile):
     filename = file.filename
     default_tenant = "default"
     task = Task(tenant=default_tenant, task="extract_segments", params=Params(filename=filename))
-    PdfFile(default_tenant).save(pdf_file_name=filename, file=file.file.read())
+    pdf_file = PdfFile(default_tenant)
+    pdf_file.save(pdf_file_name=filename, file=file.file.read())
     extraction_data = extract_segments(task, "default.xml")
+    pdf_file.remove(pdf_file_name=filename)
     return extraction_data.paragraphs
 
 

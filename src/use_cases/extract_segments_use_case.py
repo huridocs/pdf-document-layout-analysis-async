@@ -5,6 +5,7 @@ from ml_cloud_connector.adapters.google_v2.GoogleV2Repository import GoogleV2Rep
 from ml_cloud_connector.domain.RestCall import RestCall
 from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
+from ml_cloud_connector.ports.CloudProviderRepository import CloudProviderRepository
 from ml_cloud_connector.use_cases.ExecuteOnCloudUseCase import ExecuteOnCloudUseCase
 
 from configuration import (
@@ -14,11 +15,12 @@ from configuration import (
     USE_LOCAL_SEGMENTATION,
     service_logger,
     DOCUMENT_LAYOUT_ANALYSIS_PORT,
+    DATA_PATH,
 )
-from data_model.SegmentBox import SegmentBox
-from PdfFile import PdfFile
-from data_model.ExtractionData import ExtractionData
-from data_model.Task import Task
+from domain.SegmentBox import SegmentBox
+from domain.PdfFile import PdfFile
+from domain.ExtractionData import ExtractionData
+from domain.Task import Task
 import requests
 
 RETRIES = 3
@@ -90,6 +92,9 @@ def extract_segments_cloud(pdf_file: PdfFile, task: Task, xml_file_name: str = "
     if not success:
         return False, None
 
+    if not save_cloud_xml_file(cloud_provider, xml_file_name):
+        return False, None
+
     segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results]
 
     return True, ExtractionData(
@@ -99,6 +104,17 @@ def extract_segments_cloud(pdf_file: PdfFile, task: Task, xml_file_name: str = "
         page_height=0 if not segments else segments[0].page_height,
         page_width=0 if not segments else segments[0].page_width,
     )
+
+
+def save_cloud_xml_file(cloud_provider: CloudProviderRepository, xml_file_name: str) -> bool:
+    try:
+        response = requests.get(f"http://{cloud_provider.get_ip()}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}/get_xml/{xml_file_name}")
+        xml_file_path = Path(DATA_PATH, xml_file_name)
+        xml_file_path.write_bytes(response.content)
+        return True
+    except Exception as e:
+        service_logger.error(f"Error downloading XML file: {e}")
+        return False
 
 
 def ocr_pdf(task: Task) -> bool:
