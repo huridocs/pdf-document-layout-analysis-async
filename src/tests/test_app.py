@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from time import time
 from unittest import TestCase
 from fastapi.testclient import TestClient
 
@@ -15,8 +16,10 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
 
-    # @unittest.skip("This test requires a running cloud service")
+    @unittest.skip("This test requires a running cloud service")
     def test_cloud(self):
+        start = time()
+
         test_file_path = Path(APP_PATH, "tests", "test_files", "test.pdf")
         with open(test_file_path, "rb") as stream:
             file_content = stream.read()
@@ -28,3 +31,7 @@ class TestApp(TestCase):
 
             response = client.get("/get_xml/default.xml")
             self.assertEqual(200, response.status_code)
+
+        print("start")
+        print("time", round(time() - start, 2), "s")
+        print("time", round(time() - start, 2), "s")

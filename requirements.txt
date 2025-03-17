@@ -9,5 +9,5 @@ httpx==0.27.0
 sentry-sdk==2.8.0
 setuptools==75.4.0
 git+https://github.com/huridocs/queue-processor@fce76dc0c39a8d929128304eb77047985ccd344a
-git+https://github.com/huridocs/ml-cloud-connector@6f8dd2aaa890b9cebbab3254dddec65b6bbce95f
+git+https://github.com/huridocs/ml-cloud-connector@f6ae4b5244b27131e28e2ea1b501ab1bba68fdc7
 
