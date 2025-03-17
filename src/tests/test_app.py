@@ -15,7 +15,7 @@ class TestApp(TestCase):
 
         self.assertEqual(200, response.status_code)
 
-    @unittest.skip("This test requires a running cloud service")
+    # @unittest.skip("This test requires a running cloud service")
     def test_cloud(self):
         test_file_path = Path(APP_PATH, "tests", "test_files", "test.pdf")
         with open(test_file_path, "rb") as stream:

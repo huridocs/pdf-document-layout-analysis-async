@@ -88,14 +88,14 @@ def extract_segments_cloud(pdf_file: PdfFile, task: Task, xml_file_name: str = "
         files=files,
         data={"fast": "False"},
     )
-    results, success, error = execute_on_cloud_use_case.execute(rest_call)
+    response, success, error = execute_on_cloud_use_case.execute(rest_call)
     if not success:
         return False, None
 
-    if not save_cloud_xml_file(cloud_provider, xml_file_name):
+    if not save_cloud_xml_file(execute_on_cloud_use_case, xml_file_name):
         return False, None
 
-    segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in results]
+    segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in response.json()]
 
     return True, ExtractionData(
         tenant=task.tenant,
@@ -106,9 +106,18 @@ def extract_segments_cloud(pdf_file: PdfFile, task: Task, xml_file_name: str = "
     )
 
 
-def save_cloud_xml_file(cloud_provider: CloudProviderRepository, xml_file_name: str) -> bool:
+def save_cloud_xml_file(execute_on_cloud_use_case: ExecuteOnCloudUseCase, xml_file_name: str) -> bool:
     try:
-        response = requests.get(f"http://{cloud_provider.get_ip()}:{DOCUMENT_LAYOUT_ANALYSIS_PORT}/get_xml/{xml_file_name}")
+        rest_call = RestCall(
+            port=DOCUMENT_LAYOUT_ANALYSIS_PORT,
+            endpoint=["get_xml", xml_file_name],
+            method="GET",
+        )
+        response, success, error = execute_on_cloud_use_case.execute(rest_call)
+
+        if not success:
+            return False
+
         xml_file_path = Path(DATA_PATH, xml_file_name)
         xml_file_path.write_bytes(response.content)
         return True
