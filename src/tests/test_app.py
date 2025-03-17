@@ -34,4 +34,3 @@ class TestApp(TestCase):
 
         print("start")
         print("time", round(time() - start, 2), "s")
-        print("time", round(time() - start, 2), "s")
