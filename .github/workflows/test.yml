@@ -22,7 +22,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install dependencies
-      run: pip3 install black pytest PyRSMQ==0.5.1 redis==5.0.7 requests==2.32.3 graypy==2.1.0 httpx==0.27.0 pydantic==2.9.2 fastapi==0.111.1 pymongo==4.8.0
+      run: pip3 install -r requirements.txt
 
     - name: Lint with black
       run: black --line-length 125 . --check
