@@ -140,7 +140,7 @@ class TestEndToEnd(TestCase):
         self.assertEqual(False, extraction_message.success)
 
     @staticmethod
-    def get_redis_message() -> ResultMessage:
+    def get_redis_message() -> ResultMessage | None:
         queues_names = ["segmentation", "ocr"]
 
         for i in range(160):
@@ -151,3 +151,5 @@ class TestEndToEnd(TestCase):
                 if message:
                     queue.deleteMessage(id=message["id"]).execute()
                     return ResultMessage(**json.loads(message["message"]))
+
+        return None

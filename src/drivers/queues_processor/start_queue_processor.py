@@ -18,6 +18,7 @@ from configuration import (
     service_logger,
     QUEUES_NAMES,
 )
+from domain.PdfFile import PdfFile
 from domain.ResultMessage import ResultMessage
 from domain.Task import Task
 from use_cases.extract_segments_use_case import ocr_pdf, get_xml_name, extract_segments
@@ -31,6 +32,23 @@ def get_failed_results_message(task: Task, message: str) -> ResultMessage:
         success=False,
         error_message=message,
     )
+
+
+def is_valid_pdf(filepath):
+    try:
+        with open(filepath, "rb") as f:
+            header = f.read(5)
+            if header != b"%PDF-":
+                return False
+            f.seek(-1024, 2)
+            end_bytes = f.read(1024)
+            if b"%%EOF" not in end_bytes:
+                return False
+        return True
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return False
 
 
 def ocr_pdf_task(task):
@@ -53,24 +71,26 @@ def process(message):
     try:
         task = Task(**message)
     except ValidationError:
-        service_logger.error(f"validation error: {message}", exc_info=True)
+        service_logger.error(f"The message was incorrectly formatted: {message}")
         return None
 
     try:
         service_logger.info(f"Processing Redis message: {message}")
 
+        if not is_valid_pdf(PdfFile(task.tenant).get_path(task.params.filename)):
+            extraction_message = get_failed_results_message(task, f"The file does not appear to be a valid PDF")
+            service_logger.info(extraction_message.model_dump_json())
+            return extraction_message.model_dump_json()
+
         if task.task == "ocr":
             return ocr_pdf_task(task)
 
         return process_task(task).model_dump_json()
-    except RuntimeError:
-        extraction_message = get_failed_results_message(task, "Error processing PDF")
-        service_logger.error(extraction_message.model_dump_json(), exc_info=True)
     except FileNotFoundError:
-        extraction_message = get_failed_results_message(task, "Error FileNotFoundError")
+        extraction_message = get_failed_results_message(task, "The PDF could not be found")
         service_logger.error(extraction_message.model_dump_json(), exc_info=True)
-    except Exception:
-        extraction_message = get_failed_results_message(task, "Error")
+    except (RuntimeError, Exception):
+        extraction_message = get_failed_results_message(task, "An unexpected error occurred")
         service_logger.error(extraction_message.model_dump_json(), exc_info=True)
 
     return extraction_message.model_dump_json()
