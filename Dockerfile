@@ -1,4 +1,5 @@
 FROM python:3.12-slim-bullseye
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apt-get update && apt-get install -y git
 
@@ -13,8 +14,8 @@ RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 COPY requirements.txt requirements.txt
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN uv pip install --upgrade pip
+RUN uv pip install -r requirements.txt
 
 WORKDIR /app
 COPY ./src ./src

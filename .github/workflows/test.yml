@@ -21,17 +21,22 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install just commander and uv
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y just python3-uv
+
     - name: Install dependencies
-      run: pip3 install -r dev-requirements.txt
+      run: uv pip install -r dev-requirements.txt
 
     - name: Lint with black
       run: black --line-length 125 . --check
 
     - name: Free up space
-      run: make free_up_space
+      run: just free_up_space
 
     - name: Start service
-      run: make start_detached
+      run: just start_detached
 
     - name: Check API ready
       uses: emilioschepis/wait-for-endpoint@v1.0.3
