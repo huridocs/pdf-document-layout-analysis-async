@@ -28,7 +28,7 @@ jobs:
         curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Install dependencies
-      run: uv pip install --system -r dev-requirements.txt
+      run: uv pip install --python=$(which python3) -r dev-requirements.txt
 
     - name: Lint with black
       run: black --line-length 125 . --check
