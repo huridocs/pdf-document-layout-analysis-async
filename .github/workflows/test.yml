@@ -49,4 +49,4 @@ jobs:
         interval: 500
 
     - name: Test with unittest
-      run: cd src; python3 -m pytest
+      run: cd src; pytest
