@@ -21,14 +21,13 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install just commander and uv
+    - name: Install just commander
       run: |
         sudo apt-get update
         sudo apt-get install -y just
-        curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Install dependencies
-      run: uv pip install --python=$(which python3) -r dev-requirements.txt
+      run: python3 -m pip install -r dev-requirements.txt
 
     - name: Lint with black
       run: black --line-length 125 . --check
@@ -47,9 +46,6 @@ jobs:
         expected-status: 200
         timeout: 120000
         interval: 500
-
-    - name: Install pytest
-      run: python3 -m pip install pytest
 
     - name: Test with unittest
       run: cd src; python3 -m pytest
