@@ -48,5 +48,8 @@ jobs:
         timeout: 120000
         interval: 500
 
+    - name: Install pytest
+      run: python3 -m pip install pytest
+
     - name: Test with unittest
-      run: cd src; pytest
+      run: cd src; python3 -m pytest
