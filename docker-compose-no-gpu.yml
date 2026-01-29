@@ -12,17 +12,13 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    networks:
-      - network-pdf-layout
-    ports:
-      - "5051:5051"
-    env_file: .env_test
+      - PYTHONUNBUFFERED=1
+    network_mode: host
     depends_on:
       - mongo-pdf-layout
 
-
-  queue-processor-pdf-layout:
-    container_name: "queue-processor-pdf-layout"
+  queue-processor-pdf-layout-gpu:
+    container_name: "queue-processor-pdf-layout-gpu"
     entrypoint: [ "python", "-m", "src.drivers.queues_processor.start_queue_processor" ]
     init: true
     restart: unless-stopped
@@ -34,22 +30,22 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
-    networks:
-      - network-pdf-layout
-    env_file: .env_test
+      - PYTHONUNBUFFERED=1
+      - USE_FAST=false
+    network_mode: host
     depends_on:
       - mongo-pdf-layout
 
-  worker-pdf-layout:
-    container_name: "worker-pdf-layout"
+  worker-pdf-layout-gpu:
+    container_name: "worker-pdf-layout-gpu"
     entrypoint: [ "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--chdir", "./src", "app:app", "--bind", "0.0.0.0:5060", "--timeout", "10000"]
     image: ghcr.io/huridocs/pdf-document-layout-analysis:0.0.26
     init: true
     restart: unless-stopped
-    ports:
-      - "5060:5060"
-    networks:
-      - network-pdf-layout
+    network_mode: host
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     volumes:
       - data:/app/xmls
 
@@ -58,35 +54,7 @@ services:
     restart: unless-stopped
     command: mongod --port 25017
     image: "mongo:7.0.12"
-    networks:
-      - network-pdf-layout
-
-  redis-pdf-layout:
-    container_name: redis-pdf-layout
-    restart: unless-stopped
-    image: "redis:7.2.5"
-    command: redis-server
-    environment:
-      - REDIS_REPLICATION_MODE=master
-    networks:
-      - network-pdf-layout
-    ports:
-      - "6379:6379"
-
-  redis-commander-pdf-layout:
-    container_name: redis-commander-pdf-layout
-    restart: unless-stopped
-    image: "rediscommander/redis-commander:latest"
-    environment:
-      - REDIS_HOSTS=local:redis-pdf-layout:6379
-    networks:
-      - network-pdf-layout
-    ports:
-      - "8081:8081"
-
-networks:
-  network-pdf-layout:
-    driver: bridge
+    network_mode: host
 
 volumes:
   data:

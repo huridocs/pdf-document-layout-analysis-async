@@ -18,6 +18,9 @@ test:
 start:
 	docker compose up --build
 
+start-no-gpu:
+	docker compose -f docker-compose-no-gpu.yml up --build
+
 stop:
 	docker compose stop ; docker compose -f docker-compose-test.yml stop
 
