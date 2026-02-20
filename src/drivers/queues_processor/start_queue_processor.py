@@ -1,6 +1,14 @@
 import json
+import os
+from typing import Union
+
 import pymongo
-from pydantic import ValidationError
+from ml_cloud_connector.adapters.google_v2.GoogleServerless import GoogleServerless
+from ml_cloud_connector.domain.RestCall import RestCall
+from ml_cloud_connector.domain.ServerParameters import ServerParameters
+from ml_cloud_connector.domain.ServerType import ServerType
+from ml_cloud_connector.use_cases.ExecuteOnServerlessUseCase import ExecuteOnServerlessUseCase
+from pydantic import ValidationError, TypeAdapter
 from queue_processor.QueueProcessor import QueueProcessor
 
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -17,11 +25,20 @@ from configuration import (
     SENTRY_DSN,
     service_logger,
     QUEUES_NAMES,
+    LANGUAGES_SHORT,
+    LANGUAGES,
+    PROMPTS,
 )
 from domain.PdfFile import PdfFile
 from domain.ResultMessage import ResultMessage
 from domain.Task import Task
+from domain.Translation import Translation
+from domain.TranslationResponseMessage import TranslationResponseMessage
+from domain.TranslationTask import TranslationTask
+from domain.TranslationTaskMessage import TranslationTaskMessage
 from use_cases.extract_segments_use_case import ocr_pdf, get_xml_name, extract_segments
+
+adapter = TypeAdapter(Union[TranslationTaskMessage, Task])
 
 
 def get_failed_results_message(task: Task, message: str) -> ResultMessage:
@@ -67,9 +84,71 @@ def ocr_pdf_task(task):
     return extraction_message.model_dump_json()
 
 
+def get_empty_translation(translation_task):
+    return Translation(
+        text="",
+        language=translation_task.language_to,
+        success=True,
+        error_message="",
+    )
+
+
+def get_error_translation(translation_task: TranslationTask, error_message: str):
+    return Translation(
+        text=translation_task.text,
+        language=translation_task.language_to,
+        success=False,
+        error_message=error_message,
+    )
+
+
+def get_prompt(translation_task: TranslationTask):
+    lang_map = dict(zip(LANGUAGES_SHORT, LANGUAGES))
+    language_to_name = lang_map.get(translation_task.language_to.lower()[:2], "English")
+    return PROMPTS["Prompt 3"].format(language_to_name=language_to_name, text_to_translate=translation_task.text)
+
+
+def get_translation_from_task(translation_task: TranslationTask):
+    if not translation_task.text.strip():
+        return get_empty_translation(translation_task)
+
+    service_logger.info(f"Using translation serverless")
+
+    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.TRANSLATIONS)
+    CLOUD_PROVIDER = GoogleServerless(server_parameters=SERVER_PARAMETERS, service_logger=service_logger)
+    EXECUTE_ON_CLOUD = ExecuteOnServerlessUseCase(serverless_provider=CLOUD_PROVIDER, service_logger=service_logger)
+
+    rest_call = RestCall(
+        endpoint=[os.getenv("GOOGLE_OLLAMA_URL", ""), "/api/generate"],
+        method="POST",
+        data={"model": "ali6parmak/hy-mt1.5:latest", "prompt": get_prompt(translation_task), "stream": False},
+        port=8080,
+    )
+    response, finished, error = EXECUTE_ON_CLOUD.execute(rest_call)
+
+    if not finished or error:
+        return get_error_translation(translation_task, error)
+
+    response_content = response["response"]
+    if response_content.startswith("```") and response_content.endswith("```"):
+        response_content = response_content[3:-3]
+
+    return Translation(
+        text=response_content,
+        language=translation_task.language_to,
+        success=True,
+        error_message="",
+    )
+
+
 def process(message):
     try:
-        task = Task(**message)
+        task = adapter.validate_python(message)
+        if isinstance(task, TranslationTaskMessage):
+            return TranslationResponseMessage(
+                **task.model_dump(),
+                translations=[get_translation_from_task(translation_task) for translation_task in task.get_tasks()],
+            ).model_dump()
     except ValidationError:
         service_logger.error(f"The message was incorrectly formatted: {message}")
         return None
