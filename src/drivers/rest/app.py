@@ -110,6 +110,7 @@ async def processed_pdf(namespace: str, pdf_file_name: str):
 @app.post("/translate")
 @catch_exceptions
 async def translate(text: str, language_from: str, language_to: str):
+    service_logger.info(f"Translate text from {language_from} to {language_to}")
     translation_task = TranslationTask(text=text, language_from=language_from, language_to=language_to)
     translator = GoogleTranslationAdapter(service_logger)
     result, success, error = await run_in_threadpool(translator.translate, translation_task)
