@@ -13,8 +13,10 @@ from starlette.concurrency import run_in_threadpool
 from starlette.responses import PlainTextResponse, FileResponse
 from starlette.background import BackgroundTask
 
+from adapters.google_translation_adapter import GoogleTranslationAdapter
 from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
 from domain.PdfFile import PdfFile
+from domain.TranslationTask import TranslationTask
 from drivers.rest.catch_exceptions import catch_exceptions
 from drivers.queues_processor.run import extract_segments_from_file
 from drivers.rest.get_paragraphs import get_paragraphs
@@ -103,3 +105,14 @@ async def processed_pdf(namespace: str, pdf_file_name: str):
     return FileResponse(
         path=path, media_type="application/pdf", filename=pdf_file_name, background=BackgroundTask(os.remove, path)
     )
+
+
+@app.post("/translate")
+@catch_exceptions
+async def translate(text: str, language_from: str, language_to: str):
+    translation_task = TranslationTask(text=text, language_from=language_from, language_to=language_to)
+    translator = GoogleTranslationAdapter(service_logger)
+    result, success, error = await run_in_threadpool(translator.translate, translation_task)
+    if not success:
+        raise HTTPException(status_code=500, detail=error)
+    return {"translated_text": result}
