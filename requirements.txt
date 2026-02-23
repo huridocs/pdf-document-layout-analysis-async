@@ -8,5 +8,5 @@ pymongo==4.8.0
 sentry-sdk==2.8.0
 setuptools==75.4.0
 git+https://github.com/huridocs/queue-processor@fce76dc0c39a8d929128304eb77047985ccd344a
-git+https://github.com/huridocs/ml-cloud-connector@2026.2.20.1
+git+https://github.com/huridocs/ml-cloud-connector@2026.2.23.1
 
