@@ -32,6 +32,7 @@ services:
       - SENTRY_DSN=${SENTRY_DSN:-}
       - PYTHONUNBUFFERED=1
       - USE_FAST=false
+      - USE_TRANSLATION_TEST_ADAPTER=true
     network_mode: host
     depends_on:
       - mongo-pdf-layout
@@ -63,5 +64,14 @@ services:
     image: "mongo:7.0.12"
     network_mode: host
 
+  redis-commander-pdf-layout:
+    container_name: redis-commander-pdf-layout
+    restart: unless-stopped
+    network_mode: host
+    image: "rediscommander/redis-commander:latest"
+    environment:
+      - REDIS_HOSTS=local:localhost:6379
+    ports:
+      - "8081:8081"
 volumes:
   data:

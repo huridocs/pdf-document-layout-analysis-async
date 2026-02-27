@@ -23,3 +23,13 @@ class TestGoogleTranslationAdapter(unittest.TestCase):
         self.assertIsInstance(result, str)
         self.assertEqual(result, "Hola, mundo.")
         self.assertGreater(len(result), 0)
+
+    @unittest.skip("This test requires a running cloud service")
+    def test_translate_returns_translated_text_other_languages(self):
+        translation_task = TranslationTask(text="Hola mundo.", language_from="es", language_to="ar")
+        result, success, error = self.adapter.translate(translation_task)
+
+        self.assertTrue(success)
+        self.assertEqual(error, "")
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
