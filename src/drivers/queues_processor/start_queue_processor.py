@@ -1,8 +1,7 @@
-import json
 import os
 from typing import Union
 
-import pymongo
+from psycopg_pool import ConnectionPool
 from pydantic import ValidationError, TypeAdapter
 from queue_processor.QueueProcessor import QueueProcessor
 
@@ -11,8 +10,7 @@ import sentry_sdk
 
 from adapters.translation_test_adapter import TranslationTestAdapter
 from configuration import (
-    MONGO_HOST,
-    MONGO_PORT,
+    DATABASE_URL,
     REDIS_HOST,
     REDIS_PORT,
     SERVICE_HOST,
@@ -131,9 +129,15 @@ def process_task(task):
         file_url=f"{service_url}/get_xml/{xml_file_name}",
     )
     extraction_data_json = extraction_data.model_dump_json()
-    client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
-    pdf_paragraph_db = client["pdf_paragraph"]
-    pdf_paragraph_db.paragraphs.insert_one(json.loads(extraction_data_json))
+    with ConnectionPool(DATABASE_URL, open=True).connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO paragraphs (tenant, file_name, data)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (tenant, file_name) DO UPDATE SET data = EXCLUDED.data
+            """,
+            (extraction_data.tenant, extraction_data.file_name, extraction_data_json),
+        )
     service_logger.info(f"Results Redis message: {extraction_message}")
     return extraction_message
 

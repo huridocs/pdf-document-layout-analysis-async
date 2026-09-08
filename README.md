@@ -87,8 +87,8 @@ Default parameters:
 
     REDIS_HOST=redis_paragraphs
     REDIS_PORT=6379
-    MONGO_HOST=mongo_paragraphs
-    MONGO_PORT=28017
+    POSTGRES_HOST=postgres_paragraphs
+    POSTGRES_PORT=28017
     SERVICE_HOST=http://127.0.0.1
     SERVICE_PORT=5051
 

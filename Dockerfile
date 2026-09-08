@@ -1,11 +1,11 @@
-FROM python:3.12-slim-bullseye
+FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apt-get update && apt-get install -y git
 
 RUN mkdir -p /app/src /app/data
 
-RUN addgroup --system python && adduser --system --group python
+RUN addgroup --system python && adduser --system --home /app python
 RUN chown -R python:python /app
 USER python
 

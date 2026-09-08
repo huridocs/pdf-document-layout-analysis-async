@@ -18,7 +18,7 @@ services:
       - "5051:5051"
     env_file: .env_test
     depends_on:
-      - mongo-pdf-layout
+      - postgres-pdf-layout
 
 
   queue-processor-pdf-layout:
@@ -38,7 +38,7 @@ services:
       - network-pdf-layout
     env_file: .env_test
     depends_on:
-      - mongo-pdf-layout
+      - postgres-pdf-layout
 
   worker-pdf-layout:
     container_name: "worker-pdf-layout"
@@ -53,18 +53,24 @@ services:
     volumes:
       - data:/app/xmls
 
-  mongo-pdf-layout:
-    container_name: "mongo-pdf-layout"
+  postgres-pdf-layout:
+    container_name: "postgres-pdf-layout"
     restart: unless-stopped
-    command: mongod --port 25017
-    image: "mongo:7.0.12"
+    image: "postgres:17.4"
+    command: ["postgres", "-p", "25017"]
+    environment:
+      - POSTGRES_DB=pdf_paragraph
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./scripts/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - network-pdf-layout
 
   redis-pdf-layout:
     container_name: redis-pdf-layout
     restart: unless-stopped
-    image: "redis:7.2.5"
+    image: "redis:8.2"
     command: redis-server
     environment:
       - REDIS_REPLICATION_MODE=master

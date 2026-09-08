@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from os.path import join
 
-import pymongo
+from psycopg_pool import ConnectionPool
 import requests
 from fastapi import FastAPI, HTTPException, File, UploadFile
 import sys
@@ -14,7 +14,7 @@ from starlette.responses import PlainTextResponse, FileResponse
 from starlette.background import BackgroundTask
 
 from adapters.google_translation_adapter import GoogleTranslationAdapter
-from configuration import MONGO_HOST, MONGO_PORT, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
+from configuration import DATABASE_URL, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
 from domain.PdfFile import PdfFile
 from domain.TranslationTask import TranslationTask
 from drivers.rest.catch_exceptions import catch_exceptions
@@ -23,11 +23,14 @@ from drivers.rest.get_paragraphs import get_paragraphs
 from drivers.rest.get_xml import get_xml
 
 
+connection_pool = ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.mongodb_client = pymongo.MongoClient(f"{MONGO_HOST}:{MONGO_PORT}")
+    connection_pool.check()
     yield
-    app.mongodb_client.close()
+    connection_pool.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -81,7 +84,7 @@ async def async_extraction(tenant, file: UploadFile = File(...)):
 @app.get("/get_paragraphs/{tenant}/{pdf_file_name}")
 @catch_exceptions
 async def get_paragraphs_endpoint(tenant: str, pdf_file_name: str):
-    return await run_in_threadpool(get_paragraphs, app.mongodb_client, tenant, pdf_file_name)
+    return await run_in_threadpool(get_paragraphs, connection_pool, tenant, pdf_file_name)
 
 
 @app.get("/get_xml/{xml_file_name}", response_class=PlainTextResponse)

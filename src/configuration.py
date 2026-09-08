@@ -13,12 +13,16 @@ SERVICE_PORT = os.environ.get("SERVICE_PORT", "5051")
 GRAYLOG_IP = os.environ.get("GRAYLOG_IP")
 REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
-MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
-MONGO_PORT = os.environ.get("MONGO_PORT", "25017")
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "25017")
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 USE_FAST = os.environ.get("USE_FAST", "True").lower() in ("true", "1", "t")
 USE_LOCAL_SEGMENTATION = os.environ.get("USE_LOCAL_SEGMENTATION", "True").lower() in ("true", "1", "t")
+
+DATABASE_URL = (
+    f"postgresql://postgres@{POSTGRES_HOST}:{POSTGRES_PORT}/pdf_paragraph?options=-c%20search_path%3Dpdf_paragraph"
+)
 
 
 DOCUMENT_LAYOUT_ANALYSIS_PORT = os.environ.get("DOCUMENT_LAYOUT_ANALYSIS_PORT", "5060")

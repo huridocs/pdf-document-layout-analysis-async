@@ -15,7 +15,7 @@ services:
       - PYTHONUNBUFFERED=1
     network_mode: host
     depends_on:
-      - mongo-pdf-layout
+      - postgres-pdf-layout
 
   queue-processor-pdf-layout-gpu:
     container_name: "queue-processor-pdf-layout-gpu"
@@ -34,7 +34,7 @@ services:
       - USE_FAST=false
     network_mode: host
     depends_on:
-      - mongo-pdf-layout
+      - postgres-pdf-layout
 
   worker-pdf-layout-gpu:
     container_name: "worker-pdf-layout-gpu"
@@ -49,11 +49,17 @@ services:
     volumes:
       - data:/app/xmls
 
-  mongo-pdf-layout:
-    container_name: "mongo-pdf-layout"
+  postgres-pdf-layout:
+    container_name: "postgres-pdf-layout"
     restart: unless-stopped
-    command: mongod --port 25017
-    image: "mongo:7.0.12"
+    image: "postgres:17.4"
+    command: ["postgres", "-p", "25017"]
+    environment:
+      - POSTGRES_DB=pdf_paragraph
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./scripts/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     network_mode: host
 
 volumes:
