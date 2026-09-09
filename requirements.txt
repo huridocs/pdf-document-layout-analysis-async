@@ -8,5 +8,5 @@ psycopg[binary,pool]==3.2.3
 sentry-sdk==2.8.0
 setuptools==84.0.0
 git+https://github.com/huridocs/queue-processor@25ac3ef9f0924e70a385606e5cba6719c1eb1d90
-git+https://github.com/huridocs/ml-cloud-connector@2026.9.9.1
+git+https://github.com/huridocs/ml-cloud-connector@2026.9.9.3
 

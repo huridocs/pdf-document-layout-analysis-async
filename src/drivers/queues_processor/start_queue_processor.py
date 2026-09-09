@@ -1,8 +1,11 @@
 import os
-from typing import Union
+from typing import Any, Union
+import json
 
 from psycopg_pool import ConnectionPool
 from pydantic import ValidationError, TypeAdapter
+from queue_processor.QueueProcess import QueueProcess
+from queue_processor.QueueProcessResults import QueueProcessResults
 from queue_processor.QueueProcessor import QueueProcessor
 
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -138,8 +141,23 @@ def process_task(task):
             """,
             (extraction_data.tenant, extraction_data.file_name, extraction_data_json),
         )
+
     service_logger.info(f"Results Redis message: {extraction_message}")
     return extraction_message
+
+
+class QueueProcessService(QueueProcess):
+    def process_message(self, queue_name: str, message: Any) -> QueueProcessResults:
+        return QueueProcessResults(results=to_results_dict(process(message)), delete_message=True)
+
+    def process(self, queue_name: str) -> QueueProcessResults:
+        return QueueProcessResults()
+
+
+def to_results_dict(results: str | dict | None) -> dict | None:
+    if results is None:
+        return None
+    return json.loads(results) if isinstance(results, str) else results
 
 
 if __name__ == "__main__":
@@ -155,4 +173,4 @@ if __name__ == "__main__":
 
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, service_logger, 7)
-    queue_processor.start(process)
+    queue_processor.start(QueueProcessService())
