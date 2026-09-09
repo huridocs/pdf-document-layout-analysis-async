@@ -47,5 +47,14 @@ jobs:
         timeout: 120000
         interval: 500
 
+    - name: Check worker ready
+      uses: emilioschepis/wait-for-endpoint@v1.0.3
+      with:
+        url: http://localhost:5060
+        method: GET
+        expected-status: 200
+        timeout: 300000
+        interval: 2000
+
     - name: Test with unittest
       run: cd src; python3 -m pytest
