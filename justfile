@@ -35,20 +35,27 @@ upgrade:
 
 free_up_space:
 	df -h
-	sudo rm -rf /usr/share/dotnet
-	sudo rm -rf /usr/local/lib/android
-	sudo rm -rf /opt/hostedtoolcache/CodeQL
-	sudo rm -rf /opt/ghc
-	sudo rm -rf "/usr/local/share/boost"
-	sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-	sudo rm -rf "/opt/hostedtoolcache/boost"
+	# Remove pre-installed toolchains and SDKs that are not needed
+	sudo rm -rf /usr/share/dotnet || true
+	sudo rm -rf /usr/local/lib/android || true
+	sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+	sudo rm -rf /opt/ghc || true
+	sudo rm -rf /usr/local/share/boost || true
+	sudo rm -rf /opt/hostedtoolcache/boost || true
+	sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+	# Remove large apt packages
 	sudo apt-get remove -y '^llvm-.*' || true
 	sudo apt-get remove -y 'php.*' || true
 	sudo apt-get remove -y google-cloud-sdk hhvm google-chrome-stable firefox mono-devel || true
-	sudo apt-get autoremove -y
-	sudo apt-get clean
-	sudo rm -rf /usr/share/dotnet
-	sudo rm -rf /usr/local/lib/android
-	sudo rm -rf /opt/hostedtoolcache/CodeQL
-	sudo docker image prune --all --force
+	sudo apt-get autoremove -y || true
+	sudo apt-get clean || true
+	# Clear package manager and tool caches
+	sudo rm -rf /root/.cache || true
+	sudo rm -rf /home/runner/.cache || true
+	sudo rm -rf /home/runner/.npm || true
+	sudo rm -rf /usr/local/lib/node_modules || true
+	sudo rm -rf /opt/pipx || true
+	# Drop swap and prune docker images
+	sudo swapoff -a || true
+	sudo docker system prune --all --force || true
 	df -h

@@ -93,6 +93,35 @@ Default parameters:
     SERVICE_PORT=5051
 
 
+## Deploy to Google Cloud Run
+
+The service can be deployed to [Google Cloud Run](https://cloud.google.com/run) with GPU support.
+Make sure you are authenticated with your own Google account (`gcloud auth login`) and that billing
+is enabled on your project before running the command below.
+
+    gcloud run deploy pdf-document-layout-analysis \
+      --image ghcr.io/huridocs/pdf-document-layout-analysis:0.0.35 \
+      --region europe-west4 \
+      --port 8080 \
+      --command "gunicorn" \
+      --args="-k,uvicorn.workers.UvicornWorker,--chdir,./src,app:app,--bind,0.0.0.0:8080,--timeout,10000" \
+      --gpu 1 --gpu-type nvidia-l4 \
+      --cpu 4 --memory 16Gi \
+      --no-cpu-throttling \
+      --no-gpu-zonal-redundancy \
+      --max-instances 1 \
+      --concurrency 1 \
+      --timeout 900 \
+      --no-allow-unauthenticated
+
+Notes:
+- `--no-allow-unauthenticated` requires callers to authenticate with a Google account that has
+  access to the service. Use `gcloud run services add-iam-policy-binding` to grant access.
+- The service depends on a Redis server and a PostgreSQL database. Configure them via the
+  environment variables described in [Service configuration](#service-configuration) (e.g. with
+  `--set-env-vars`).
+
+
 ## Set up environment for development
 It works with Python 3.12 [install] (https://runnable.com/docker/getting-started/)
 
