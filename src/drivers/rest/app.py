@@ -22,7 +22,6 @@ from drivers.queues_processor.run import extract_segments_from_file
 from drivers.rest.get_paragraphs import get_paragraphs
 from drivers.rest.get_xml import get_xml
 
-
 connection_pool = ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection)
 
 

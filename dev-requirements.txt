@@ -1,5 +1,4 @@
 -r requirements.txt
-testing-postgres==0.0.1
-pytest==8.2.2
-black==24.4.2
+pytest==9.0.3
+black==26.5.1
 pip-upgrader==1.4.15
