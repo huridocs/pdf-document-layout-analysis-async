@@ -33,7 +33,10 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Install dependencies
-      run: uv pip install --system -r dev-requirements.txt
+      run: |
+        uv venv .venv
+        uv pip install --python .venv/bin/python -r dev-requirements.txt
+        echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
     - name: Lint with black
       run: black --line-length 125 . --check
