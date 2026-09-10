@@ -1,21 +1,14 @@
 import os
 from pathlib import Path
 
-from ml_cloud_connector.adapters.google_v2.GoogleV2Repository import GoogleV2Repository
-from ml_cloud_connector.domain.RestCall import RestCall
-from ml_cloud_connector.domain.ServerParameters import ServerParameters
-from ml_cloud_connector.domain.ServerType import ServerType
-from ml_cloud_connector.use_cases.ExecuteOnCloudUseCase import ExecuteOnCloudUseCase
-
 from configuration import (
     DOCUMENT_LAYOUT_ANALYSIS_URL,
     USE_FAST,
     OCR_OUTPUT,
     USE_LOCAL_SEGMENTATION,
     service_logger,
-    DOCUMENT_LAYOUT_ANALYSIS_PORT,
-    DATA_PATH,
 )
+from adapters.google_document_layout_analysis_adapter import GoogleDocumentLayoutAnalysisAdapter
 from domain.SegmentBox import SegmentBox
 from domain.PdfFile import PdfFile
 from domain.ExtractionData import ExtractionData
@@ -25,9 +18,7 @@ import requests
 RETRIES = 3
 
 if not USE_LOCAL_SEGMENTATION:
-    SERVER_PARAMETERS = ServerParameters(namespace="google_v2", server_type=ServerType.DOCUMENT_LAYOUT_ANALYSIS)
-    CLOUD_PROVIDER = GoogleV2Repository(server_parameters=SERVER_PARAMETERS, service_logger=service_logger)
-    EXECUTE_ON_CLOUD = ExecuteOnCloudUseCase(cloud_provider=CLOUD_PROVIDER, service_logger=service_logger)
+    CLOUD_ADAPTER = GoogleDocumentLayoutAnalysisAdapter(service_logger)
 
 
 def get_xml_name(task: Task) -> str:
@@ -76,54 +67,7 @@ def extract_segments(task: Task, xml_file_name: str = "") -> ExtractionData:
 
 
 def extract_segments_cloud(pdf_file: PdfFile, task: Task, xml_file_name: str = "") -> (bool, ExtractionData):
-    with open(pdf_file.get_path(task.params.filename), "rb") as stream:
-        file_content = stream.read()
-
-    files = {"file": (task.params.filename, file_content, "application/pdf")}
-
-    rest_call = RestCall(
-        port=DOCUMENT_LAYOUT_ANALYSIS_PORT,
-        endpoint=["save_xml", xml_file_name] if xml_file_name else "save_xml",
-        method="POST",
-        files=files,
-        data={"fast": "False"},
-    )
-    response, success, error = EXECUTE_ON_CLOUD.execute(rest_call)
-    if not success:
-        return False, None
-
-    if not save_cloud_xml_file(xml_file_name):
-        return False, None
-
-    segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in response.json()]
-
-    return True, ExtractionData(
-        tenant=task.tenant,
-        file_name=task.params.filename,
-        paragraphs=segments,
-        page_height=0 if not segments else segments[0].page_height,
-        page_width=0 if not segments else segments[0].page_width,
-    )
-
-
-def save_cloud_xml_file(xml_file_name: str) -> bool:
-    try:
-        rest_call = RestCall(
-            port=DOCUMENT_LAYOUT_ANALYSIS_PORT,
-            endpoint=["get_xml", xml_file_name],
-            method="GET",
-        )
-        response, success, error = EXECUTE_ON_CLOUD.execute(rest_call)
-
-        if not success:
-            return False
-
-        xml_file_path = Path(DATA_PATH, xml_file_name)
-        xml_file_path.write_bytes(response.content)
-        return True
-    except Exception as e:
-        service_logger.error(f"Error downloading XML file: {e}")
-        return False
+    return CLOUD_ADAPTER.extract_segments(pdf_file, task, xml_file_name)
 
 
 def ocr_pdf(task: Task) -> bool:
