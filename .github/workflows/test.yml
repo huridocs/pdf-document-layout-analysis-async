@@ -26,9 +26,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y just
 
-    - name: Free up disk space
-      run: just free_up_space
-
     - name: Install uv
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -52,5 +49,70 @@ jobs:
       run: |
         timeout 300 bash -c 'until [ "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5060)" = "200" ]; do sleep 2; done'
 
+    - name: Dump environment diagnostics (pre-test)
+      if: always()
+      run: |
+        echo "=== Docker version ==="
+        docker version
+        echo "=== docker compose ps ==="
+        docker compose -f docker-compose-test.yml ps -a
+        echo "=== docker compose config (resolved) ==="
+        docker compose -f docker-compose-test.yml config
+        echo "=== Host disk / memory ==="
+        df -h; free -h
+        echo "=== .env_test as seen by compose ==="
+        cat .env_test
+        echo "=== Ports listening on host ==="
+        sudo ss -tlnp | grep -E ':(5051|5060|25017|6379|8081)\b' || true
+        echo "=== Postgres init.sql present ==="
+        cat scripts/postgres/init.sql
+        echo "=== Worker /info ==="
+        curl -sS -m 10 http://localhost:5060/info || true
+        echo
+        echo "=== API / ==="
+        curl -sS -m 10 http://localhost:5051/ || true
+        echo
+        echo "=== API /info (proxies to worker) ==="
+        curl -sS -m 30 http://localhost:5051/info || true
+        echo
+
+    - name: Wait for postgres healthy before tests
+      run: |
+        timeout 60 bash -c 'until docker exec postgres-pdf-layout pg_isready -p 25017 -U postgres -d pdf_paragraph >/dev/null 2>&1; do sleep 1; done' || {
+          echo "POSTGRES NEVER BECAME READY - dumping its logs";
+          docker logs --tail 100 postgres-pdf-layout;
+          exit 1;
+        }
+        docker exec postgres-pdf-layout psql -p 25017 -U postgres -d pdf_paragraph -c '\dt pdf_paragraph.*'
+
     - name: Test with unittest
-      run: cd src; python3 -m pytest
+      run: cd src; python3 -m pytest -v 2>&1 | tee /tmp/pytest_output.txt; test ${PIPESTATUS[0]} -eq 0
+
+    - name: Dump container logs after tests
+      if: always()
+      run: |
+        echo "=== docker compose ps -a (post-test) ==="
+        docker compose -f docker-compose-test.yml ps -a
+        echo "=== Restart counts / health ==="
+        for c in api-pdf-layout queue-processor-pdf-layout worker-pdf-layout postgres-pdf-layout redis-pdf-layout; do
+          echo "--- $c ---"
+          docker inspect --format 'restarts={{.RestartCount}} running={{.State.Running}} started={{.State.StartedAt}} exit={{.State.ExitCode}}' "$c" 2>/dev/null || echo "(not found)"
+        done
+        echo "=== API logs (api-pdf-layout) ==="
+        docker logs --tail 300 api-pdf-layout 2>&1 | grep -v -E 'GET /(docs|openapi)' || true
+        echo "=== Queue processor logs (queue-processor-pdf-layout) ==="
+        docker logs --tail 300 queue-processor-pdf-layout 2>&1 || true
+        echo "=== Worker logs (worker-pdf-layout) ==="
+        docker logs --tail 200 worker-pdf-layout 2>&1 || true
+        echo "=== Postgres logs (postgres-pdf-layout) ==="
+        docker logs --tail 100 postgres-pdf-layout 2>&1 || true
+        echo "=== Redis logs (redis-pdf-layout) ==="
+        docker logs --tail 50 redis-pdf-layout 2>&1 || true
+        echo "=== Postgres: paragraphs table contents ==="
+        docker exec postgres-pdf-layout psql -p 25017 -U postgres -d pdf_paragraph -c 'SELECT tenant, file_name, length(data::text) AS data_len FROM pdf_paragraph.paragraphs ORDER BY id DESC LIMIT 20;' 2>&1 || true
+        echo "=== Postgres: tables ==="
+        docker exec postgres-pdf-layout psql -p 25017 -U postgres -d pdf_paragraph -c '\dt pdf_paragraph.*' 2>&1 || true
+        echo "=== Data volume contents (shared /app/data) ==="
+        docker exec api-pdf-layout sh -c 'ls -laR /app/data 2>/dev/null | head -100' || true
+        echo "=== Worker volume contents (/app/xmls) ==="
+        docker exec worker-pdf-layout sh -c 'ls -la /app/xmls 2>/dev/null | head -50' || true
