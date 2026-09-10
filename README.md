@@ -104,7 +104,7 @@ is enabled on your project before running the command below.
       --region europe-west4 \
       --port 8080 \
       --command "gunicorn" \
-      --args="-k,uvicorn.workers.UvicornWorker,--chdir,./src,app:app,--bind,0.0.0.0:8080,--timeout,10000" \
+      --args="-k,uvicorn.workers.UvicornWorker,--chdir,./src,drivers.rest.app:app,--bind,0.0.0.0:8080,--timeout,10000" \
       --gpu 1 --gpu-type nvidia-l4 \
       --cpu 4 --memory 16Gi \
       --no-cpu-throttling \

@@ -45,22 +45,12 @@ jobs:
       run: just start_detached
 
     - name: Check API ready
-      uses: emilioschepis/wait-for-endpoint@v1.0.3
-      with:
-        url: http://localhost:5051
-        method: GET
-        expected-status: 200
-        timeout: 120000
-        interval: 500
+      run: |
+        timeout 120 bash -c 'until [ "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5051)" = "200" ]; do sleep 0.5; done'
 
     - name: Check worker ready
-      uses: emilioschepis/wait-for-endpoint@v1.0.3
-      with:
-        url: http://localhost:5060
-        method: GET
-        expected-status: 200
-        timeout: 300000
-        interval: 2000
+      run: |
+        timeout 300 bash -c 'until [ "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5060)" = "200" ]; do sleep 2; done'
 
     - name: Test with unittest
       run: cd src; python3 -m pytest
