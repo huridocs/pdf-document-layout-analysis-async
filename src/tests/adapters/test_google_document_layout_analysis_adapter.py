@@ -17,7 +17,7 @@ class TestGoogleDocumentLayoutAnalysisAdapter(unittest.TestCase):
         self.logger = getLogger(__name__)
         self.adapter = GoogleDocumentLayoutAnalysisAdapter(self.logger)
 
-    # @unittest.skip("This test requires a running cloud service")
+    @unittest.skip("This test requires a running cloud service")
     def test_extract_segments_returns_segments(self):
         tenant = "cloud_adapter_test"
         pdf_file_name = "test.pdf"
@@ -38,7 +38,7 @@ class TestGoogleDocumentLayoutAnalysisAdapter(unittest.TestCase):
         self.assertEqual(792, extraction_data.page_height)
         self.assertTrue(extraction_data.paragraphs[0].text in ["A /INF/76/1", "United Nations"])
 
-    # @unittest.skip("This test requires a running cloud service")
+    @unittest.skip("This test requires a running cloud service")
     def test_extract_segments_saves_xml_file(self):
         tenant = "cloud_adapter_test"
         pdf_file_name = "test.pdf"
