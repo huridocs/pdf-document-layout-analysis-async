@@ -44,8 +44,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 service_logger = logging.getLogger(__name__)
 
 
+MAX_TRANSLATE_TEXT_CHARS = int(os.environ.get("MAX_TRANSLATE_TEXT_CHARS", "4000"))
+
 PROMPTS = {
-    "Prompt 3": """Please translate the following text into {language_to_name}. Follow these guidelines:
+    "Prompt 3": """Please translate the following text from {language_from_name} into {language_to_name}. Follow these guidelines:
 1. Maintain the original layout and formatting.
 2. Translate all text accurately without omitting any part of the content.
 3. Preserve the tone and style of the original text.
@@ -60,5 +62,5 @@ Here is the text to be translated:
 """,
 }
 
-LANGUAGES_SHORT = ["en", "fr", "es", "ru", "ar", "sp"]
-LANGUAGES = ["English", "French", "Spanish", "Russian", "Arabic", "Spanish"]
+LANGUAGES_SHORT = ["en", "fr", "es", "ru", "ar"]
+LANGUAGES = ["English", "French", "Spanish", "Russian", "Arabic"]

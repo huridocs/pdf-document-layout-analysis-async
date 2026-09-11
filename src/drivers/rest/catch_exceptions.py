@@ -14,6 +14,8 @@ def catch_exceptions(func):
             if kwargs and "xml_file_name" in kwargs:
                 service_logger.info(f"Asking for file: {kwargs['xml_file_name']}")
             return await func(*args, **kwargs)
+        except HTTPException:
+            raise
         except TypeError:
             raise HTTPException(status_code=404, detail="No paragraphs")
         except Exception:
