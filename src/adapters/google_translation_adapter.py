@@ -18,8 +18,13 @@ class GoogleTranslationAdapter(TranslationPort):
 
     def _get_prompt(self, translation_task: TranslationTask) -> str:
         lang_map = dict(zip(LANGUAGES_SHORT, LANGUAGES))
+        language_from_name = lang_map.get(translation_task.language_from.lower()[:2], "English")
         language_to_name = lang_map.get(translation_task.language_to.lower()[:2], "English")
-        return PROMPTS["Prompt 3"].format(language_to_name=language_to_name, text_to_translate=translation_task.text)
+        return PROMPTS["Prompt 3"].format(
+            language_from_name=language_from_name,
+            language_to_name=language_to_name,
+            text_to_translate=translation_task.text,
+        )
 
     def translate(self, translation_task: TranslationTask) -> tuple[str, bool, str]:
         self.service_logger.info(f"Using Google translation serverless")

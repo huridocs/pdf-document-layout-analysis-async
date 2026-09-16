@@ -14,7 +14,14 @@ from starlette.responses import PlainTextResponse, FileResponse
 from starlette.background import BackgroundTask
 
 from adapters.google_translation_adapter import GoogleTranslationAdapter
-from configuration import DATABASE_URL, service_logger, OCR_OUTPUT, DOCUMENT_LAYOUT_ANALYSIS_URL
+from configuration import (
+    DATABASE_URL,
+    DOCUMENT_LAYOUT_ANALYSIS_URL,
+    LANGUAGES_SHORT,
+    MAX_TRANSLATE_TEXT_CHARS,
+    OCR_OUTPUT,
+    service_logger,
+)
 from domain.PdfFile import PdfFile
 from domain.TranslationTask import TranslationTask
 from drivers.rest.catch_exceptions import catch_exceptions
@@ -112,8 +119,21 @@ async def processed_pdf(namespace: str, pdf_file_name: str):
 @app.post("/translate")
 @catch_exceptions
 async def translate(text: str, language_from: str, language_to: str):
-    service_logger.info(f"Translate text from {language_from} to {language_to}")
-    translation_task = TranslationTask(text=text, language_from=language_from, language_to=language_to)
+    if len(text) > MAX_TRANSLATE_TEXT_CHARS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"text exceeds maximum length of {MAX_TRANSLATE_TEXT_CHARS} characters",
+        )
+
+    language_from_code = language_from.lower()
+    language_to_code = language_to.lower()
+    if language_from_code not in LANGUAGES_SHORT:
+        raise HTTPException(status_code=400, detail=f"Language {language_from} not supported")
+    if language_to_code not in LANGUAGES_SHORT:
+        raise HTTPException(status_code=400, detail=f"Language {language_to} not supported")
+
+    service_logger.info(f"Translate text from {language_from_code} to {language_to_code}")
+    translation_task = TranslationTask(text=text, language_from=language_from_code, language_to=language_to_code)
     translator = GoogleTranslationAdapter(service_logger)
     result, success, error = await run_in_threadpool(translator.translate, translation_task)
     if not success:
