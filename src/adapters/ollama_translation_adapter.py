@@ -1,8 +1,16 @@
 from logging import Logger
+from time import sleep
 
 import requests
 
-from configuration import LANGUAGES_SHORT, LANGUAGES, OLLAMA_API_KEY, OLLAMA_BASE_URL, PROMPTS, TRANSLATION_MODEL
+from configuration import (
+    LANGUAGES_SHORT_TO_NAME,
+    MAX_TRANSLATE_RETRIES,
+    OLLAMA_API_KEY,
+    OLLAMA_BASE_URL,
+    PROMPTS,
+    TRANSLATION_MODEL,
+)
 from domain.TranslationTask import TranslationTask
 from ports.translation_port import TranslationPort
 
@@ -15,41 +23,59 @@ class OllamaTranslationAdapter(TranslationPort):
             raise RuntimeError("OLLAMA_API_KEY must be set in the environment or .env file")
 
     def _get_prompt(self, translation_task: TranslationTask) -> str:
-        lang_map = dict(zip(LANGUAGES_SHORT, LANGUAGES))
-        language_from_name = lang_map.get(translation_task.language_from.lower()[:2], "English")
-        language_to_name = lang_map.get(translation_task.language_to.lower()[:2], "English")
+        language_from_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_from.lower()[:2], "English")
+        language_to_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_to.lower()[:2], "English")
         return PROMPTS["Prompt 3"].format(
             language_from_name=language_from_name,
             language_to_name=language_to_name,
             text_to_translate=translation_task.text,
         )
 
-    def translate(self, translation_task: TranslationTask) -> tuple[str, bool, str]:
-        self.service_logger.info(f"Using Ollama cloud model {TRANSLATION_MODEL}")
+    @staticmethod
+    def _is_retryable(error: requests.RequestException) -> bool:
+        response = error.response
+        if response is None:
+            return True
+        return response.status_code == 429 or response.status_code >= 500
 
-        try:
-            response = requests.post(
-                f"{OLLAMA_BASE_URL}/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json={
-                    "model": TRANSLATION_MODEL,
-                    "messages": [{"role": "user", "content": self._get_prompt(translation_task)}],
-                    "stream": False,
-                },
-                timeout=300,
-            )
-            response.raise_for_status()
-            response_content = response.json()["choices"][0]["message"]["content"]
-        except requests.RequestException as error:
-            error_message = error.response.text if error.response is not None else str(error)
-            self.service_logger.error(f"Ollama cloud translation failed: {error_message}")
-            return "", False, error_message
-        except (KeyError, IndexError, ValueError) as error:
-            error_message = f"Unexpected response from Ollama cloud: {error}"
-            self.service_logger.error(error_message)
-            return "", False, error_message
+    def _request_translation(self, translation_task: TranslationTask) -> str:
+        response = requests.post(
+            f"{OLLAMA_BASE_URL}/chat/completions",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json={
+                "model": TRANSLATION_MODEL,
+                "messages": [{"role": "user", "content": self._get_prompt(translation_task)}],
+                "stream": False,
+            },
+            timeout=300,
+        )
+        response.raise_for_status()
+        response_content = response.json()["choices"][0]["message"]["content"]
 
         if response_content.startswith("```") and response_content.endswith("```"):
             response_content = response_content[3:-3]
 
-        return response_content, True, ""
+        return response_content
+
+    def translate(self, translation_task: TranslationTask) -> tuple[str, bool, str]:
+        self.service_logger.info(f"Using Ollama cloud model {TRANSLATION_MODEL}")
+
+        for attempt in range(MAX_TRANSLATE_RETRIES + 1):
+            if attempt:
+                sleep(min(2 ** (attempt - 1), 10))
+                self.service_logger.info(
+                    f"Retrying Ollama cloud translation (attempt {attempt + 1}/{MAX_TRANSLATE_RETRIES + 1})"
+                )
+
+            try:
+                return self._request_translation(translation_task), True, ""
+            except requests.RequestException as error:
+                error_message = error.response.text if error.response is not None else str(error)
+                if not self._is_retryable(error):
+                    break
+            except (KeyError, IndexError, ValueError) as error:
+                error_message = f"Unexpected response from Ollama cloud: {error}"
+                break
+
+        self.service_logger.error(f"Ollama cloud translation failed: {error_message}")
+        return "", False, error_message

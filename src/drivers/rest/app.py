@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from os.path import join
@@ -17,7 +18,8 @@ from adapters.ollama_translation_adapter import OllamaTranslationAdapter
 from configuration import (
     DATABASE_URL,
     DOCUMENT_LAYOUT_ANALYSIS_URL,
-    LANGUAGES_SHORT,
+    LANGUAGES_SHORT_TO_NAME,
+    MAX_TRANSLATE_CONCURRENCY,
     MAX_TRANSLATE_TEXT_CHARS,
     OCR_OUTPUT,
     service_logger,
@@ -30,6 +32,8 @@ from drivers.rest.get_paragraphs import get_paragraphs
 from drivers.rest.get_xml import get_xml
 
 connection_pool = ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection)
+
+translate_semaphore = asyncio.Semaphore(MAX_TRANSLATE_CONCURRENCY)
 
 
 @asynccontextmanager
@@ -127,15 +131,16 @@ async def translate(text: str, language_from: str, language_to: str):
 
     language_from_code = language_from.lower()
     language_to_code = language_to.lower()
-    if language_from_code not in LANGUAGES_SHORT:
+    if language_from_code not in LANGUAGES_SHORT_TO_NAME:
         raise HTTPException(status_code=400, detail=f"Language {language_from} not supported")
-    if language_to_code not in LANGUAGES_SHORT:
+    if language_to_code not in LANGUAGES_SHORT_TO_NAME:
         raise HTTPException(status_code=400, detail=f"Language {language_to} not supported")
 
     service_logger.info(f"Translate text from {language_from_code} to {language_to_code}")
     translation_task = TranslationTask(text=text, language_from=language_from_code, language_to=language_to_code)
     translator = OllamaTranslationAdapter(service_logger)
-    result, success, error = await run_in_threadpool(translator.translate, translation_task)
+    async with translate_semaphore:
+        result, success, error = await run_in_threadpool(translator.translate, translation_task)
     if not success:
         raise HTTPException(status_code=500, detail=error)
     return {"translated_text": result}

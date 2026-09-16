@@ -98,6 +98,15 @@ The base URL and model can be overridden:
     OLLAMA_BASE_URL=https://ollama.com/v1
     OLLAMA_API_KEY=
     TRANSLATION_MODEL=deepseek-v4.1-flash:cloud
+    MAX_TRANSLATE_CONCURRENCY=3
+    MAX_TRANSLATE_RETRIES=3
+
+`MAX_TRANSLATE_CONCURRENCY` bounds how many `POST /translate` requests reach Ollama at the same time.
+Excess requests wait for a slot instead of being rejected.
+
+`MAX_TRANSLATE_RETRIES` is the number of extra attempts when an Ollama call fails with a network error,
+HTTP 429, or 5xx. Retries use exponential backoff (1s, 2s, 4s, … capped at 10s). Non-retryable failures
+(e.g. 4xx other than 429, malformed responses) fail immediately.
 
 
 ## Deploy to Google Cloud Run

@@ -7,7 +7,7 @@ from ml_cloud_connector.domain.ServerParameters import ServerParameters
 from ml_cloud_connector.domain.ServerType import ServerType
 from ml_cloud_connector.use_cases.ExecuteOnServerlessUseCase import ExecuteOnServerlessUseCase
 
-from configuration import LANGUAGES_SHORT, LANGUAGES, PROMPTS
+from configuration import PROMPTS
 from domain.TranslationTask import TranslationTask
 from ports.translation_port import TranslationPort
 

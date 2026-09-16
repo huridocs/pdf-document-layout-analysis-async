@@ -45,6 +45,8 @@ service_logger = logging.getLogger(__name__)
 
 
 MAX_TRANSLATE_TEXT_CHARS = int(os.environ.get("MAX_TRANSLATE_TEXT_CHARS", "4000"))
+MAX_TRANSLATE_CONCURRENCY = int(os.environ.get("MAX_TRANSLATE_CONCURRENCY", "3"))
+MAX_TRANSLATE_RETRIES = int(os.environ.get("MAX_TRANSLATE_RETRIES", "3"))
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "https://ollama.com/v1")
 OLLAMA_API_KEY = os.environ.get("OLLAMA_API_KEY")
@@ -66,5 +68,4 @@ Here is the text to be translated:
 """,
 }
 
-LANGUAGES_SHORT = ["en", "fr", "es", "ru", "ar"]
-LANGUAGES = ["English", "French", "Spanish", "Russian", "Arabic"]
+LANGUAGES_SHORT_TO_NAME = {"en": "English", "fr": "French", "es": "Spanish", "ru": "Russian", "ar": "Arabic"}
