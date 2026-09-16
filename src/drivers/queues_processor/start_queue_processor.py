@@ -23,7 +23,7 @@ from configuration import (
     service_logger,
     QUEUES_NAMES,
 )
-from adapters.google_translation_adapter import GoogleTranslationAdapter
+from adapters.ollama_translation_adapter import OllamaTranslationAdapter
 from domain.PdfFile import PdfFile
 from domain.ResultMessage import ResultMessage
 from domain.Task import Task
@@ -37,7 +37,7 @@ adapter = TypeAdapter(Union[TranslationTaskMessage, Task])
 if os.getenv("USE_TRANSLATION_TEST_ADAPTER", ""):
     translation_adapter = TranslationTestAdapter(service_logger)
 else:
-    translation_adapter = GoogleTranslationAdapter(service_logger)
+    translation_adapter = OllamaTranslationAdapter(service_logger)
 
 translate_text_use_case = TranslateTextUseCase(translation_adapter)
 

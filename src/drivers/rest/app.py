@@ -13,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.responses import PlainTextResponse, FileResponse
 from starlette.background import BackgroundTask
 
-from adapters.google_translation_adapter import GoogleTranslationAdapter
+from adapters.ollama_translation_adapter import OllamaTranslationAdapter
 from configuration import (
     DATABASE_URL,
     DOCUMENT_LAYOUT_ANALYSIS_URL,
@@ -134,7 +134,7 @@ async def translate(text: str, language_from: str, language_to: str):
 
     service_logger.info(f"Translate text from {language_from_code} to {language_to_code}")
     translation_task = TranslationTask(text=text, language_from=language_from_code, language_to=language_to_code)
-    translator = GoogleTranslationAdapter(service_logger)
+    translator = OllamaTranslationAdapter(service_logger)
     result, success, error = await run_in_threadpool(translator.translate, translation_task)
     if not success:
         raise HTTPException(status_code=500, detail=error)

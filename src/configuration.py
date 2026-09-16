@@ -46,6 +46,10 @@ service_logger = logging.getLogger(__name__)
 
 MAX_TRANSLATE_TEXT_CHARS = int(os.environ.get("MAX_TRANSLATE_TEXT_CHARS", "4000"))
 
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "https://ollama.com/v1")
+OLLAMA_API_KEY = os.environ.get("OLLAMA_API_KEY")
+TRANSLATION_MODEL = os.environ.get("TRANSLATION_MODEL", "deepseek-v4.1-flash:cloud")
+
 PROMPTS = {
     "Prompt 3": """Please translate the following text from {language_from_name} into {language_to_name}. Follow these guidelines:
 1. Maintain the original layout and formatting.

@@ -92,6 +92,13 @@ Default parameters:
     SERVICE_HOST=http://127.0.0.1
     SERVICE_PORT=5051
 
+Translation uses Ollama cloud. Set `OLLAMA_API_KEY` (create one at https://ollama.com/settings/keys).
+The base URL and model can be overridden:
+
+    OLLAMA_BASE_URL=https://ollama.com/v1
+    OLLAMA_API_KEY=
+    TRANSLATION_MODEL=deepseek-v4.1-flash:cloud
+
 
 ## Deploy to Google Cloud Run
 
