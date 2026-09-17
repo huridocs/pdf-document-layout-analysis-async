@@ -23,8 +23,8 @@ class OllamaTranslationAdapter(TranslationPort):
             raise RuntimeError("OLLAMA_API_KEY must be set in the environment or .env file")
 
     def _get_prompt(self, translation_task: TranslationTask) -> str:
-        language_from_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_from.lower()[:2], "English")
-        language_to_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_to.lower()[:2], "English")
+        language_from_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_from.lower(), "English")
+        language_to_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_to.lower(), "English")
         return PROMPTS["Prompt 3"].format(
             language_from_name=language_from_name,
             language_to_name=language_to_name,

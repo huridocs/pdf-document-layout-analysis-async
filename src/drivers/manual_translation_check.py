@@ -23,10 +23,12 @@ from adapters.ollama_translation_adapter import OllamaTranslationAdapter
 from configuration import OLLAMA_BASE_URL, TRANSLATION_MODEL, service_logger
 from domain.TranslationTask import TranslationTask
 
-TEXT = """Este servicio hace traducciones"""
+TEXT = """ Device keys allow Ollama on macOS, Windows and Linux to access your account's cloud models and allow you to push models to your account.
 
-LANGUAGE_FROM = "es"
-LANGUAGE_TO = "en"
+These keys are automatically added to your account when you sign in to the Ollama app or run ollama signin in the CLI. """
+
+LANGUAGE_FROM = "en"
+LANGUAGE_TO = "tr"
 
 
 def main() -> int:

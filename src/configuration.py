@@ -68,4 +68,23 @@ Here is the text to be translated:
 """,
 }
 
-LANGUAGES_SHORT_TO_NAME = {"en": "English", "fr": "French", "es": "Spanish", "ru": "Russian", "ar": "Arabic"}
+LANGUAGES_SHORT_TO_NAME = {
+    "en": "English",
+    "zh-cn": "Simplified Chinese",
+    "zh-tw": "Traditional Chinese",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "nl": "Dutch",
+    "pl": "Polish",
+    "ru": "Russian",
+    "tr": "Turkish",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "vi": "Vietnamese",
+    "id": "Indonesian",
+    "ar": "Arabic",
+    "hi": "Hindi",
+}
