@@ -108,6 +108,18 @@ Excess requests wait for a slot instead of being rejected.
 HTTP 429, or 5xx. Retries use exponential backoff (1s, 2s, 4s, … capped at 10s). Non-retryable failures
 (e.g. 4xx other than 429, malformed responses) fail immediately.
 
+## Supported translation languages
+
+Translation requests identify languages with the Uwazi settings language keys, matched
+case-insensitively. Supported codes:
+
+    en es fr de it pt nl pl ru tr ja ko vi ar hi   zh-Hans zh-Hant   in
+
+`in` is Indonesian. Requests with any other code (`zh`, `cs`, `el`, `he`, `fa`, `ro`, `uk`, …) are
+rejected: `POST /translate` answers `400 Language <code> not supported`, and queue messages come back
+with `success: false` and an `Unsupported language(s): <code>` error message, so Uwazi never gets a
+translation made under the wrong language pair.
+
 
 ## Deploy to Google Cloud Run
 

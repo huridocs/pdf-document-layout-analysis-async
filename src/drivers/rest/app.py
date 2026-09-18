@@ -18,10 +18,10 @@ from adapters.ollama_translation_adapter import OllamaTranslationAdapter
 from configuration import (
     DATABASE_URL,
     DOCUMENT_LAYOUT_ANALYSIS_URL,
-    LANGUAGES_SHORT_TO_NAME,
     MAX_TRANSLATE_CONCURRENCY,
     MAX_TRANSLATE_TEXT_CHARS,
     OCR_OUTPUT,
+    is_language_supported,
     service_logger,
 )
 from domain.PdfFile import PdfFile
@@ -131,9 +131,9 @@ async def translate(text: str, language_from: str, language_to: str):
 
     language_from_code = language_from.lower()
     language_to_code = language_to.lower()
-    if language_from_code not in LANGUAGES_SHORT_TO_NAME:
+    if not is_language_supported(language_from_code):
         raise HTTPException(status_code=400, detail=f"Language {language_from} not supported")
-    if language_to_code not in LANGUAGES_SHORT_TO_NAME:
+    if not is_language_supported(language_to_code):
         raise HTTPException(status_code=400, detail=f"Language {language_to} not supported")
 
     service_logger.info(f"Translate text from {language_from_code} to {language_to_code}")

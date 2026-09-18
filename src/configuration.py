@@ -68,10 +68,13 @@ Here is the text to be translated:
 """,
 }
 
+# Keys are the language keys Uwazi's automatic translation sends in `language_from` and
+# `languages_to` (its settings language keys); values are the names used in the translation
+# prompt. Codes are matched case-insensitively.
 LANGUAGES_SHORT_TO_NAME = {
     "en": "English",
-    "zh-cn": "Simplified Chinese",
-    "zh-tw": "Traditional Chinese",
+    "zh-hans": "Simplified Chinese",
+    "zh-hant": "Traditional Chinese",
     "es": "Spanish",
     "fr": "French",
     "de": "German",
@@ -84,7 +87,15 @@ LANGUAGES_SHORT_TO_NAME = {
     "ja": "Japanese",
     "ko": "Korean",
     "vi": "Vietnamese",
-    "id": "Indonesian",
+    "in": "Indonesian",
     "ar": "Arabic",
     "hi": "Hindi",
 }
+
+
+def is_language_supported(language_code: str | None) -> bool:
+    return bool(language_code) and language_code.lower() in LANGUAGES_SHORT_TO_NAME
+
+
+def language_name(language_code: str) -> str:
+    return LANGUAGES_SHORT_TO_NAME[language_code.lower()]

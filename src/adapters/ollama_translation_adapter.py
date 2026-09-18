@@ -3,14 +3,7 @@ from time import sleep
 
 import requests
 
-from configuration import (
-    LANGUAGES_SHORT_TO_NAME,
-    MAX_TRANSLATE_RETRIES,
-    OLLAMA_API_KEY,
-    OLLAMA_BASE_URL,
-    PROMPTS,
-    TRANSLATION_MODEL,
-)
+from configuration import MAX_TRANSLATE_RETRIES, OLLAMA_API_KEY, OLLAMA_BASE_URL, PROMPTS, TRANSLATION_MODEL, language_name
 from domain.TranslationTask import TranslationTask
 from ports.translation_port import TranslationPort
 
@@ -23,8 +16,8 @@ class OllamaTranslationAdapter(TranslationPort):
             raise RuntimeError("OLLAMA_API_KEY must be set in the environment or .env file")
 
     def _get_prompt(self, translation_task: TranslationTask) -> str:
-        language_from_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_from.lower(), "English")
-        language_to_name = LANGUAGES_SHORT_TO_NAME.get(translation_task.language_to.lower(), "English")
+        language_from_name = language_name(translation_task.language_from)
+        language_to_name = language_name(translation_task.language_to)
         return PROMPTS["Prompt 3"].format(
             language_from_name=language_from_name,
             language_to_name=language_to_name,

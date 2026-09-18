@@ -91,7 +91,7 @@ def process(message):
         if isinstance(task, TranslationTaskMessage):
             return TranslationResponseMessage(
                 **task.model_dump(),
-                translations=[translate_text_use_case.execute(translation_task) for translation_task in task.get_tasks()],
+                translations=translate_text_use_case.execute_message(task),
             ).model_dump()
     except ValidationError:
         service_logger.error(f"The message was incorrectly formatted: {message}")
