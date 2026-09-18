@@ -34,7 +34,7 @@ class GoogleDocumentLayoutAnalysisAdapter:
 
         rest_call = RestCall(
             port=DOCUMENT_LAYOUT_ANALYSIS_PORT,
-            endpoint=["save_xml", xml_file_name] if xml_file_name else "save_xml",
+            endpoint="analyze",
             method="POST",
             files=files,
             data={"fast": "False"},
@@ -43,10 +43,11 @@ class GoogleDocumentLayoutAnalysisAdapter:
         if not success:
             return False, None
 
-        if not self._save_xml_file(xml_file_name):
-            return False, None
+        payload = response.json()
+        segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in payload["segmentation"]]
 
-        segments: list[SegmentBox] = [SegmentBox(**segment_box) for segment_box in response.json()]
+        if xml_file_name and not self._save_xml_content(xml_file_name, payload["xml"]):
+            return False, None
 
         return True, ExtractionData(
             tenant=task.tenant,
@@ -56,21 +57,11 @@ class GoogleDocumentLayoutAnalysisAdapter:
             page_width=0 if not segments else segments[0].page_width,
         )
 
-    def _save_xml_file(self, xml_file_name: str) -> bool:
+    def _save_xml_content(self, xml_file_name: str, xml_content: str) -> bool:
         try:
-            rest_call = RestCall(
-                port=DOCUMENT_LAYOUT_ANALYSIS_PORT,
-                endpoint=["get_xml", xml_file_name],
-                method="GET",
-            )
-            response, success, error = self._execute(rest_call)
-
-            if not success:
-                return False
-
             xml_file_path = Path(DATA_PATH, xml_file_name)
-            xml_file_path.write_bytes(response.content)
+            xml_file_path.write_text(xml_content)
             return True
         except Exception as e:
-            self.service_logger.error(f"Error downloading XML file: {e}")
+            self.service_logger.error(f"Error saving XML file: {e}")
             return False

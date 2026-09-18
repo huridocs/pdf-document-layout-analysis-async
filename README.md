@@ -128,7 +128,7 @@ Make sure you are authenticated with your own Google account (`gcloud auth login
 is enabled on your project before running the command below.
 
     gcloud run deploy pdf-document-layout-analysis \
-      --image ghcr.io/huridocs/pdf-document-layout-analysis:0.0.35 \
+      --image ghcr.io/huridocs/pdf-document-layout-analysis:0.0.36 \
       --region europe-west4 \
       --port 8080 \
       --command "gunicorn" \
