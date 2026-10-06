@@ -60,7 +60,7 @@ def _sweep_uploaded_pdfs(data_path: Path, ocr_output: Path, retention_seconds: f
 def _sweep_paragraphs(connection_pool: ConnectionPool, retention_hours: float) -> int:
     with connection_pool.connection() as connection:
         deleted = connection.execute(
-            "DELETE FROM paragraphs WHERE updated_at < NOW() - make_interval(hours => %s) RETURNING id",
+            "DELETE FROM paragraphs WHERE updated_at < NOW() - (%s * interval '1 hour') RETURNING id",
             (retention_hours,),
         )
         connection.commit()

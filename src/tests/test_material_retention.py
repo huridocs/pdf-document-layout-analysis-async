@@ -86,6 +86,17 @@ class TestSweepOldMaterials(TestCase):
         self.assertIn("DELETE FROM paragraphs", sql)
         self.assertEqual((3,), params)
 
+    def test_old_paragraph_rows_support_fractional_hours(self):
+        pool = FakePool()
+
+        removed = sweep_old_materials(3.5, data_path=self.data_path, ocr_output=self.ocr_output, connection_pool=pool)
+
+        self.assertEqual(1, removed)
+        sql, params = pool.executed[0]
+        self.assertIn("DELETE FROM paragraphs", sql)
+        self.assertIn("interval '1 hour'", sql)
+        self.assertEqual((3.5,), params)
+
     def test_retention_disabled_is_a_noop(self):
         old = make_old(self.data_path / "t1__old.pdf.xml", 100)
         pool = FakePool()
