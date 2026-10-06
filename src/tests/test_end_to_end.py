@@ -68,6 +68,57 @@ class TestEndToEnd(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertTrue('<?xml version="1.0" encoding="UTF-8"?>' in str(response.content))
 
+        # materials are kept for the retention window, re-fetching returns the same content
+        xml_content = response.content
+        self.assertEqual(200, requests.get(extraction_message.data_url).status_code)
+        self.assertEqual(xml_content, requests.get(extraction_message.file_url).content)
+
+    def test_ocr_and_segmentation_same_pdf(self):
+        tenant = "end_to_end_ocr_segmentation"
+        pdf_file_name = "test.pdf"
+        metadata = {"key": "abc:2"}
+
+        with open(f"{APP_PATH}/tests/test_files/{pdf_file_name}", "rb") as stream:
+            files = {"file": stream}
+            requests.post(f"{self.service_url}/async_extraction/{tenant}", files=files)
+
+        ocr_task = Task(
+            tenant=tenant,
+            task="ocr",
+            params=Params(filename=pdf_file_name, language="en", metadata=metadata),
+        )
+        ocr_queue = RedisSMQ(host="127.0.0.1", port="6379", qname="ocr_tasks")
+        ocr_queue.sendMessage().message(ocr_task.model_dump_json()).execute()
+
+        segmentation_task = Task(
+            tenant=tenant, task="segmentation", params=Params(filename=pdf_file_name, metadata=metadata)
+        )
+        segmentation_queue = RedisSMQ(host="127.0.0.1", port="6379", qname="segmentation_tasks")
+        segmentation_queue.sendMessage().message(segmentation_task.model_dump_json()).execute()
+
+        messages = [self.get_redis_message(), self.get_redis_message()]
+        ocr_message = next(message for message in messages if message.task == "ocr")
+        segmentation_message = next(message for message in messages if message.task != "ocr")
+
+        self.assertTrue(ocr_message.success)
+        self.assertEqual(metadata, ocr_message.params.metadata)
+        self.assertTrue(segmentation_message.success)
+        self.assertEqual(metadata, segmentation_message.params.metadata)
+
+        ocr_pdf_content = requests.get(ocr_message.file_url).content
+        xml_content = requests.get(segmentation_message.file_url).content
+
+        # materials are kept: the uploaded PDF is untouched and every material can be re-fetched
+        self.assertEqual(200, requests.get(ocr_message.file_url).status_code)
+        self.assertEqual(ocr_pdf_content, requests.get(ocr_message.file_url).content)
+        self.assertEqual(200, requests.get(segmentation_message.data_url).status_code)
+        self.assertEqual(xml_content, requests.get(segmentation_message.file_url).content)
+
+        # the original PDF still exists after OCR: a follow-up OCR task on it succeeds
+        follow_up_ocr = Task(tenant=tenant, task="ocr", params=Params(filename=pdf_file_name, language="en"))
+        ocr_queue.sendMessage().message(follow_up_ocr.model_dump_json()).execute()
+        self.assertTrue(self.get_redis_message().success)
+
     def test_blank_pdf(self):
         with open(f"{APP_PATH}/tests/test_files/blank.pdf", "rb") as stream:
             files = {"file": stream}

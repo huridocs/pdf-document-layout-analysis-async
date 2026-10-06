@@ -48,6 +48,23 @@ MAX_TRANSLATE_TEXT_CHARS = int(os.environ.get("MAX_TRANSLATE_TEXT_CHARS", "4000"
 MAX_TRANSLATE_CONCURRENCY = int(os.environ.get("MAX_TRANSLATE_CONCURRENCY", "3"))
 MAX_TRANSLATE_RETRIES = int(os.environ.get("MAX_TRANSLATE_RETRIES", "3"))
 
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name)
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        service_logger.warning(f"Invalid value for {name}: {raw}, using default {default}")
+        return default
+
+
+# Materials (XML, paragraphs, OCR results) and uploaded PDFs are kept for this many hours
+# before being swept; 0 or less disables retention entirely.
+MATERIAL_RETENTION_HOURS = _env_float("MATERIAL_RETENTION_HOURS", 24.0)
+MATERIAL_SWEEP_INTERVAL_MINUTES = _env_float("MATERIAL_SWEEP_INTERVAL_MINUTES", 10.0)
+
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "https://ollama.com/v1")
 OLLAMA_API_KEY = os.environ.get("OLLAMA_API_KEY")
 TRANSLATION_MODEL = os.environ.get("TRANSLATION_MODEL", "deepseek-v4.1-flash:cloud")

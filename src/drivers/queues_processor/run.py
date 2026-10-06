@@ -13,9 +13,11 @@ def extract_segments_from_file(file: UploadFile):
     task = Task(tenant=default_tenant, task="extract_segments", params=Params(filename=filename))
     pdf_file = PdfFile(default_tenant)
     pdf_file.save(pdf_file_name=filename, file=file.file.read())
-    extraction_data = extract_segments(task, "default.xml")
-    pdf_file.remove(pdf_file_name=filename)
-    return extraction_data.paragraphs
+    try:
+        extraction_data = extract_segments(task, "default.xml")
+        return extraction_data.paragraphs
+    finally:
+        pdf_file.remove(pdf_file_name=filename)
 
 
 if __name__ == "__main__":

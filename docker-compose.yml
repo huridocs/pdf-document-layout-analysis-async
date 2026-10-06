@@ -13,6 +13,8 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
       - PYTHONUNBUFFERED=1
+      - MATERIAL_RETENTION_HOURS=${MATERIAL_RETENTION_HOURS:-24}
+      - MATERIAL_SWEEP_INTERVAL_MINUTES=${MATERIAL_SWEEP_INTERVAL_MINUTES:-10}
     network_mode: host
     depends_on:
       - postgres-pdf-layout
@@ -31,6 +33,8 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - SENTRY_DSN=${SENTRY_DSN:-}
       - PYTHONUNBUFFERED=1
+      - MATERIAL_RETENTION_HOURS=${MATERIAL_RETENTION_HOURS:-24}
+      - MATERIAL_SWEEP_INTERVAL_MINUTES=${MATERIAL_SWEEP_INTERVAL_MINUTES:-10}
       - USE_FAST=false
       - USE_TRANSLATION_TEST_ADAPTER=true
     network_mode: host

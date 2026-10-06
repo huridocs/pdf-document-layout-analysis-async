@@ -108,6 +108,17 @@ Excess requests wait for a slot instead of being rejected.
 HTTP 429, or 5xx. Retries use exponential backoff (1s, 2s, 4s, … capped at 10s). Non-retryable failures
 (e.g. 4xx other than 429, malformed responses) fail immediately.
 
+Materials (segmentation XML, paragraphs, OCR results) and uploaded PDFs are kept after being fetched and
+swept away after a retention window:
+
+    MATERIAL_RETENTION_HOURS=24
+    MATERIAL_SWEEP_INTERVAL_MINUTES=10
+
+`MATERIAL_RETENTION_HOURS` is how many hours materials and uploaded PDFs are kept before a sweep deletes
+them; `0` (or less) disables sweeping entirely. `MATERIAL_SWEEP_INTERVAL_MINUTES` bounds how often the
+sweep runs: at most once per interval when a material is served, plus a background sweep in the API.
+Fetching a material does not extend its retention.
+
 ## Supported translation languages
 
 Translation requests identify languages with the Uwazi settings language keys, matched

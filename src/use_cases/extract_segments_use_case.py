@@ -92,7 +92,6 @@ def ocr_pdf(task: Task) -> bool:
             results_path = Path(OCR_OUTPUT, task.tenant, task.params.filename)
             os.makedirs(results_path.parent, exist_ok=True)
             results_path.write_bytes(results.content)
-            path.unlink()
             return True
 
     raise RuntimeError(f"Error OCR document: {results.status_code} - {results.text}")

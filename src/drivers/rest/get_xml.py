@@ -1,13 +1,12 @@
-import os
 from pathlib import Path
 
-from configuration import DATA_PATH
+import configuration
 
 
 def get_xml(xml_file_name: str) -> str:
-    xml_file_path = Path(DATA_PATH, xml_file_name)
-
-    with open(xml_file_path, mode="r") as file:
-        content = file.read()
-        os.remove(xml_file_path)
-        return content
+    xml_file_path = Path(configuration.DATA_PATH, xml_file_name)
+    try:
+        with open(xml_file_path, mode="r") as file:
+            return file.read()
+    except FileNotFoundError:
+        raise TypeError("No XML")

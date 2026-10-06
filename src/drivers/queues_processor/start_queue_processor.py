@@ -24,6 +24,7 @@ from configuration import (
     QUEUES_NAMES,
 )
 from adapters.ollama_translation_adapter import OllamaTranslationAdapter
+from drivers.db_migrations import run_migrations
 from domain.PdfFile import PdfFile
 from domain.ResultMessage import ResultMessage
 from domain.Task import Task
@@ -137,7 +138,7 @@ def process_task(task):
             """
             INSERT INTO paragraphs (tenant, file_name, data)
             VALUES (%s, %s, %s)
-            ON CONFLICT (tenant, file_name) DO UPDATE SET data = EXCLUDED.data
+            ON CONFLICT (tenant, file_name) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
             """,
             (extraction_data.tenant, extraction_data.file_name, extraction_data_json),
         )
@@ -170,6 +171,9 @@ if __name__ == "__main__":
         )
     except Exception:
         pass
+
+    with ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection) as connection_pool:
+        run_migrations(connection_pool)
 
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, service_logger, 7)
