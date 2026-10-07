@@ -81,7 +81,7 @@ def sweep_old_materials(
     data_path = data_path or Path(configuration.DATA_PATH)
     ocr_output = ocr_output or Path(configuration.OCR_OUTPUT)
 
-    configuration.service_logger.info(f"Sweeping materials older than {retention_hours} hours")
+    configuration.service_logger.debug(f"Sweeping materials older than {retention_hours} hours")
 
     removed = 0
     try:
