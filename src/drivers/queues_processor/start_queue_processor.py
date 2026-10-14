@@ -42,6 +42,8 @@ else:
 
 translate_text_use_case = TranslateTextUseCase(translation_adapter)
 
+connection_pool = ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection)
+
 
 def get_failed_results_message(task: Task, message: str) -> ResultMessage:
     return ResultMessage(
@@ -133,7 +135,7 @@ def process_task(task):
         file_url=f"{service_url}/get_xml/{xml_file_name}",
     )
     extraction_data_json = extraction_data.model_dump_json()
-    with ConnectionPool(DATABASE_URL, open=True).connection() as connection:
+    with connection_pool.connection() as connection:
         connection.execute(
             """
             INSERT INTO paragraphs (tenant, file_name, data)
@@ -172,9 +174,11 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    with ConnectionPool(DATABASE_URL, open=True, check=ConnectionPool.check_connection) as connection_pool:
-        run_migrations(connection_pool)
+    run_migrations(connection_pool)
 
     queues_names = QUEUES_NAMES.split(" ")
     queue_processor = QueueProcessor(REDIS_HOST, REDIS_PORT, queues_names, service_logger, 7)
-    queue_processor.start(QueueProcessService())
+    try:
+        queue_processor.start(QueueProcessService())
+    finally:
+        connection_pool.close()

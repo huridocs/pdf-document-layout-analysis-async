@@ -22,7 +22,7 @@ start-no-gpu:
 	docker compose -f docker-compose-no-gpu.yml up --build
 
 development:
-	USE_TRANSLATION_TEST_ADAPTER=true docker compose -f docker-compose-no-gpu.yml up --build
+	USE_TRANSLATION_TEST_ADAPTER=true USE_FAST=true docker compose -f docker-compose-no-gpu.yml up --build
 
 stop:
 	docker compose stop ; docker compose -f docker-compose-test.yml stop
