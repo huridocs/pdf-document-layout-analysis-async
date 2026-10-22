@@ -65,9 +65,9 @@ def _env_float(name: str, default: float) -> float:
 MATERIAL_RETENTION_HOURS = _env_float("MATERIAL_RETENTION_HOURS", 24.0)
 MATERIAL_SWEEP_INTERVAL_MINUTES = _env_float("MATERIAL_SWEEP_INTERVAL_MINUTES", 10.0)
 
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "https://ollama.com/v1")
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL") or "https://ollama.com/v1"
 OLLAMA_API_KEY = os.environ.get("OLLAMA_API_KEY")
-TRANSLATION_MODEL = os.environ.get("TRANSLATION_MODEL", "deepseek-v4.1-flash:cloud")
+TRANSLATION_MODEL = os.environ.get("TRANSLATION_MODEL") or "deepseek-v4.1-flash:cloud"
 
 PROMPTS = {
     "Prompt 3": """Please translate the following text from {language_from_name} into {language_to_name}. Follow these guidelines:

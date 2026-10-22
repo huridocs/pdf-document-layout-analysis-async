@@ -27,6 +27,7 @@ from configuration import (
 )
 from drivers.db_migrations import run_migrations
 from domain.PdfFile import PdfFile
+from domain.TranslationRequest import TranslationRequest
 from domain.TranslationTask import TranslationTask
 from drivers.rest.catch_exceptions import catch_exceptions
 from drivers.queues_processor.run import extract_segments_from_file
@@ -143,9 +144,7 @@ async def processed_pdf(namespace: str, pdf_file_name: str):
     return FileResponse(path=path, media_type="application/pdf", filename=pdf_file_name)
 
 
-@app.post("/translate")
-@catch_exceptions
-async def translate(text: str, language_from: str, language_to: str):
+async def translate_text(text: str, language_from: str, language_to: str) -> dict:
     if len(text) > MAX_TRANSLATE_TEXT_CHARS:
         raise HTTPException(
             status_code=400,
@@ -167,3 +166,19 @@ async def translate(text: str, language_from: str, language_to: str):
     if not success:
         raise HTTPException(status_code=500, detail=error)
     return {"translated_text": result}
+
+
+@app.post("/translate")
+@catch_exceptions
+async def translate(text: str, language_from: str, language_to: str):
+    return await translate_text(text, language_from, language_to)
+
+
+@app.post("/translate/text")
+@catch_exceptions
+async def translate_text_endpoint(translation_request: TranslationRequest):
+    return await translate_text(
+        translation_request.text,
+        translation_request.language_from,
+        translation_request.language_to,
+    )

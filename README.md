@@ -104,6 +104,9 @@ The base URL and model can be overridden:
 `MAX_TRANSLATE_CONCURRENCY` bounds how many `POST /translate` requests reach Ollama at the same time.
 Excess requests wait for a slot instead of being rejected.
 
+`MAX_TRANSLATE_TEXT_CHARS` (default `4000`) is the maximum length of the text sent to the translation
+endpoints. Longer text is rejected with `400 text exceeds maximum length of <n> characters`.
+
 `MAX_TRANSLATE_RETRIES` is the number of extra attempts when an Ollama call fails with a network error,
 HTTP 429, or 5xx. Retries use exponential backoff (1s, 2s, 4s, … capped at 10s). Non-retryable failures
 (e.g. 4xx other than 429, malformed responses) fail immediately.
@@ -119,6 +122,25 @@ them; `0` (or less) disables sweeping entirely. `MATERIAL_SWEEP_INTERVAL_MINUTES
 sweep runs: at most once per interval when a material is served, plus a background sweep in the API.
 Fetching a material does not extend its retention.
 
+## Translation endpoints
+
+Text can be translated synchronously with two endpoints. Both accept the same languages, apply the same
+`MAX_TRANSLATE_TEXT_CHARS` limit, and answer with `{"translated_text": "..."}`.
+
+`POST /translate` takes the parameters in the query string, so the text ends up in the URL:
+
+    curl -X POST "http://localhost:5051/translate?text=Hello%20world&language_from=en&language_to=es"
+
+`POST /translate/text` takes the text in a JSON body, so it is not limited by URL length:
+
+    curl -X POST http://localhost:5051/translate/text \
+      -H 'Content-Type: application/json' \
+      -d '{"text": "Hello world", "language_from": "en", "language_to": "es"}'
+
+Use `/translate/text` for text that does not fit comfortably in a URL. Both endpoints reject unsupported
+languages with `400 Language <code> not supported`.
+
+
 ## Supported translation languages
 
 Translation requests identify languages with the Uwazi settings language keys, matched
@@ -127,8 +149,8 @@ case-insensitively. Supported codes:
     en es fr de it pt nl pl ru tr ja ko vi ar hi   zh-Hans zh-Hant   in
 
 `in` is Indonesian. Requests with any other code (`zh`, `cs`, `el`, `he`, `fa`, `ro`, `uk`, …) are
-rejected: `POST /translate` answers `400 Language <code> not supported`, and queue messages come back
-with `success: false` and an `Unsupported language(s): <code>` error message, so Uwazi never gets a
+rejected: the translation endpoints answer `400 Language <code> not supported`, and queue messages come
+back with `success: false` and an `Unsupported language(s): <code>` error message, so Uwazi never gets a
 translation made under the wrong language pair.
 
 
